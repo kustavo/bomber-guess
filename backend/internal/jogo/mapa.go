@@ -41,6 +41,21 @@ func VerificarMapa(m Mapa) error {
 	if m.Config.Altura <= 0 {
 		return fmt.Errorf("%w: altura %d deve ser maior que 0", ErrMapaInvalido, m.Config.Altura)
 	}
+	minimos := []struct {
+		campo string
+		valor int
+	}{
+		{"limite_turnos", m.Config.LimiteTurnos},
+		{"bombas_por_turno", m.JogadorPadrao.BombasPorTurno},
+		{"potencia", m.JogadorPadrao.Potencia},
+		{"pavio_padrao", m.JogadorPadrao.PavioPadrao},
+		{"acoes_por_turno", m.JogadorPadrao.AcoesPorTurno},
+	}
+	for _, c := range minimos {
+		if c.valor < 1 {
+			return fmt.Errorf("%w: %s %d deve ser pelo menos 1", ErrMapaInvalido, c.campo, c.valor)
+		}
+	}
 	fixos := make(map[Posicao]bool, len(m.BlocosFixos))
 	for _, p := range m.BlocosFixos {
 		if !m.Config.NoTabuleiro(p) {

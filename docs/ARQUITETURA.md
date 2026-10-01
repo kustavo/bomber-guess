@@ -16,7 +16,16 @@ Verifica apenas o que pode ser checado a partir do estado do início do turno:
 - **VAL-02** Nenhum movimento sai do tabuleiro ou entra em bloco fixo (MOV-02). A posição é simulada ação a ação a partir da posição do jogador no início do turno.
 - **VAL-03** A quantidade de ações `PLANTAR` não passa de `bombas_por_turno` (BOM-02).
 - **VAL-04** Blocos destrutíveis **não** são verificados aqui, porque dependem das ações dos outros jogadores.
-- **VAL-05** Tratamento de erro: a primeira ação inválida (infração) e todas as seguintes viram `ESPERAR`.
+- **VAL-05** Tratamento de erro: a primeira ação inválida (infração) e todas as seguintes viram `ESPERAR`. Cada plano gera no máximo uma infração.
+- **VAL-06** A i-ésima ação do plano tem `etapa` = i (1, 2, 3…). A primeira ação fora dessa sequência é uma infração.
+- **VAL-07** O `turno` do plano é igual ao `turno` do estado. Caso contrário, o plano inteiro é descartado, com uma infração na etapa 1.
+- **VAL-08** O plano de um jogador inexistente no estado é descartado, com uma infração. O plano de um jogador morto é descartado sem infração.
+
+Cada infração (`Infracao`) registra o jogador, a posição da ação rejeitada no plano (`etapa`; 1 para VAL-07 e VAL-08), a regra violada e um motivo legível:
+
+```json
+{"jogador_id": "jogador_1", "etapa": 4, "regra": "VAL-03", "motivo": "3ª bomba no turno, limite 2"}
+```
 
 ### 1.2 Resolução do turno (`ResolverTurno`)
 
@@ -26,6 +35,45 @@ Recebe os planos validados de todos os jogadores e o `Estado`, resolve cada etap
 
 1. O **relatório de cada etapa** (`RelatorioEtapa`: posições, bombas, explosões, mortes, blocos destruídos, movimentos bloqueados), usado no replay.
 2. O novo `Estado` para o turno seguinte.
+
+- **RES-01** Jogador vivo sem plano executa `ESPERAR` em todas as etapas. Planos de jogador inexistente ou morto são ignorados; se houver mais de um plano para o mesmo jogador, vale o primeiro.
+- **RES-02** `ResolverTurno` é robusto a planos não validados: uma ação impossível (movimento para fora do tabuleiro ou para bloco fixo, bomba além de `bombas_por_turno`, tipo inválido) é executada como `ESPERAR`, sem abortar o resto do plano e sem gerar infração.
+- **RES-03** O resultado não depende da ordem dos planos recebidos.
+- **RES-04** O fim da partida segue `DEC-06` e `DEC-07` de `docs/REGRAS.md`; o relatório de cada etapa segue `DEC-09`.
+
+O fim é consultado com `VerificarFim(estado Estado) Desfecho`, que devolve `terminada`, `empate`, `vencedor` (id; ausente em empate ou partida em andamento) e `sobreviventes` (ids dos vivos).
+
+#### Exemplo de relatório de etapa
+
+Em cada jogador, `acao` é a ação do plano para a etapa e `resultado` diz o que aconteceu com ela (DEC-09): `EXECUTADA`, `BLOQUEADA` (MOV-05), `ABORTADA` (etapa depois de um bloqueio, executada como `ESPERAR`), `DESCARTADA` (jogador morto) ou `IGNORADA` (ação impossível, RES-02). `jogadores` traz todos, na ordem do `Estado`; as listas de posições vêm ordenadas por `y` e depois por `x`.
+
+```json
+{
+  "turno": 5,
+  "etapa": 5,
+  "jogadores": [
+    {"id": "jogador_1", "posicao": {"x": 6, "y": 5}, "status": "VIVO",
+     "acao": {"etapa": 5, "tipo": "MOVER", "direcao": "CIMA"}, "resultado": "EXECUTADA"},
+    {"id": "jogador_2", "posicao": {"x": 4, "y": 6}, "status": "MORTO",
+     "acao": {"etapa": 5, "tipo": "ESPERAR"}, "resultado": "EXECUTADA"},
+    {"id": "jogador_3", "posicao": {"x": 8, "y": 4}, "status": "VIVO",
+     "acao": {"etapa": 5, "tipo": "MOVER", "direcao": "DIREITA"}, "resultado": "BLOQUEADA"},
+    {"id": "jogador_4", "posicao": {"x": 12, "y": 10}, "status": "MORTO",
+     "acao": {"etapa": 5, "tipo": "ESPERAR"}, "resultado": "DESCARTADA"}
+  ],
+  "bombas": [
+    {"posicao": {"x": 2, "y": 0}, "jogador_id": "jogador_1", "potencia": 2, "pavio_restante": 2}
+  ],
+  "explosoes": [
+    {"origem": {"x": 5, "y": 6}, "potencia": 2,
+     "chamas": [{"x": 3, "y": 6}, {"x": 4, "y": 6}, {"x": 5, "y": 6}, {"x": 6, "y": 6}, {"x": 7, "y": 6}]}
+  ],
+  "chamas": [{"x": 3, "y": 6}, {"x": 4, "y": 6}, {"x": 5, "y": 6}, {"x": 6, "y": 6}, {"x": 7, "y": 6}],
+  "mortes": ["jogador_2"],
+  "blocos_destruidos": [{"x": 7, "y": 6}],
+  "movimentos_bloqueados": ["jogador_3"]
+}
+```
 
 ### 1.3 Registro de ações
 

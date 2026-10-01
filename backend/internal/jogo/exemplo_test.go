@@ -20,14 +20,6 @@ func lerMapaExemplo(t *testing.T) Mapa {
 	return m
 }
 
-func conjunto(posicoes []Posicao) map[Posicao]bool {
-	c := make(map[Posicao]bool, len(posicoes))
-	for _, p := range posicoes {
-		c[p] = true
-	}
-	return c
-}
-
 func TestMapaExemploLayout(t *testing.T) {
 	m := lerMapaExemplo(t)
 	impares := map[Posicao]bool{}

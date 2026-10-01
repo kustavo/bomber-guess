@@ -29,6 +29,8 @@ Cada regra tem um **ID estável** (ex.: `BOM-05`). Specs, testes e commits citam
 - **Posição inicial**: casa onde um jogador começa a partida, definida no mapa.
 - **Bot**: jogador controlado por uma implementação da interface `Bot`.
 - **Catálogo de bots**: lista das versões de bot disponíveis (`GET /bots`).
+- **Relatório de etapa** (`RelatorioEtapa`): o que aconteceu em uma etapa: posições, ações executadas, bombas, explosões, mortes e blocos destruídos. Usado no replay e no registro.
+- **Desfecho** (`Desfecho`): situação da partida deduzida do estado: em andamento, vitória de um jogador ou empate (DEC-06).
 
 ## 1. Tabuleiro e coordenadas
 
@@ -175,9 +177,14 @@ Formato do **plano** de um jogador para um turno:
 
 ## 8. Decisões
 
-Casos que a especificação original não definia. Cada item começa como **[PROPOSTA]** e vira **[DECIDIDO]** quando confirmado (no marco 2, antes de implementar a resolução do turno).
+Casos que a especificação original não definia. Cada item começa como **[PROPOSTA]** e vira **[DECIDIDO]** quando confirmado. DEC-01 a DEC-09 foram decididas na spec do marco 2 (`specs/02-resolucao/spec.md`).
 
-- **DEC-01** [PROPOSTA] **Bloco destrutível atingido por duas explosões na mesma etapa**: presume-se que conta como um único bloco destruído (importa para estatísticas).
-- **DEC-02** [PROPOSTA] **Morte registrada em qual turno/etapa quando o jogador morre por bomba de turno anterior**: presume-se o turno e a etapa atuais.
-- **DEC-03** [PROPOSTA] **Jogador morto**: deixa de contar para `etapas_neste_turno` já no turno seguinte.
-- **DEC-04** [PROPOSTA] **Bombas restantes após o fim da partida**: são ignoradas.
+- **DEC-01** [DECIDIDO] **Bloco destrutível atingido por duas explosões na mesma etapa**: conta como um único bloco destruído (importa para estatísticas).
+- **DEC-02** [DECIDIDO] **Morte registrada em qual turno/etapa quando o jogador morre por bomba de turno anterior**: o turno e a etapa atuais.
+- **DEC-03** [DECIDIDO] **Jogador morto**: deixa de contar para `etapas_neste_turno` já no turno seguinte.
+- **DEC-04** [DECIDIDO] **Bombas restantes após o fim da partida**: são ignoradas.
+- **DEC-05** [DECIDIDO] **Bombas que explodem na mesma etapa**: toda bomba presente no início da fase de explosões (ORD-04) para o fogo das outras (BOM-07), mesmo que ela também exploda nessa etapa. O resultado não depende da ordem em que as bombas são processadas.
+- **DEC-06** [DECIDIDO] **Fim no meio do turno**: quando, ao fim de uma etapa, restar no máximo um jogador vivo, a partida termina ali e as etapas seguintes não são executadas. O fim é deduzido do estado (jogadores vivos e `turno`), sem campo próprio no JSON. Resolver o turno de uma partida terminada não faz nada.
+- **DEC-07** [DECIDIDO] **Limite de turnos**: o turno de número `limite_turnos` é jogado; se ao fim dele restarem 2 ou mais jogadores vivos, a partida termina em empate entre eles (FIM-04).
+- **DEC-08** [DECIDIDO] **Direção em ação que não é `MOVER`**: é ignorada e removida pelo validador, sem infração.
+- **DEC-09** [DECIDIDO] **Ações executadas**: o relatório de cada etapa traz, para cada jogador, a ação de fato executada, distinguindo movimento bloqueado (MOV-05), ação abortada e ação descartada por morte (FIM-01). É dele que sai a terceira versão das ações (`docs/ARQUITETURA.md`, seção 1.3).

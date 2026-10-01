@@ -46,6 +46,11 @@ func TestMapaInvalido(t *testing.T) {
 		{"MAP-05 casa com bloco fixo e destrutível", func(m *Mapa) { m.BlocosDestrutiveis = append(m.BlocosDestrutiveis, Posicao{X: 1, Y: 1}) }, "(1,1)"},
 		{"MAP-05 uma posição inicial", func(m *Mapa) { m.PosicoesIniciais = m.PosicoesIniciais[:1] }, "posições iniciais"},
 		{"MAP-05 nenhuma posição inicial", func(m *Mapa) { m.PosicoesIniciais = nil }, "posições iniciais"},
+		{"MAP-05 limite_turnos zero", func(m *Mapa) { m.Config.LimiteTurnos = 0 }, "limite_turnos"},
+		{"MAP-05 bombas_por_turno zero", func(m *Mapa) { m.JogadorPadrao.BombasPorTurno = 0 }, "bombas_por_turno"},
+		{"MAP-05 potencia zero", func(m *Mapa) { m.JogadorPadrao.Potencia = 0 }, "potencia"},
+		{"MAP-05 pavio_padrao zero", func(m *Mapa) { m.JogadorPadrao.PavioPadrao = 0 }, "pavio_padrao"},
+		{"MAP-05 acoes_por_turno negativo", func(m *Mapa) { m.JogadorPadrao.AcoesPorTurno = -1 }, "acoes_por_turno"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
