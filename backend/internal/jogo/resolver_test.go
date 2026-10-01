@@ -46,6 +46,7 @@ func TestRelatorioEtapa(t *testing.T) {
 		Mortes:               []string{"jogador_3"},
 		BlocosDestruidos:     []Posicao{p(4, 0)},
 		MovimentosBloqueados: []string{"jogador_1"},
+		BlocosFechados:       []Posicao{},
 	}
 	t.Run("DEC-09 RES-04 relatório completo da etapa", func(t *testing.T) {
 		if r := relatorioDaEtapa(t, relatorios, 1); !reflect.DeepEqual(r, esperado) {

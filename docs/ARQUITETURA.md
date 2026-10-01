@@ -33,7 +33,7 @@ Cada infração (`Infracao`) registra o jogador, a posição da ação rejeitada
 
 Recebe os planos validados de todos os jogadores e o `Estado`, resolve cada etapa na ordem definida em `docs/REGRAS.md` (seção 6) e produz:
 
-1. O **relatório de cada etapa** (`RelatorioEtapa`: posições, bombas, explosões, mortes, blocos destruídos, movimentos bloqueados), usado no replay.
+1. O **relatório de cada etapa** (`RelatorioEtapa`: posições, bombas, explosões, mortes, blocos destruídos, movimentos bloqueados e, na última etapa do turno, as casas que fecharam), usado no replay.
 2. O novo `Estado` para o turno seguinte.
 
 - **RES-01** Jogador vivo sem plano executa `ESPERAR` em todas as etapas. Planos de jogador inexistente ou morto são ignorados; se houver mais de um plano para o mesmo jogador, vale o primeiro.
@@ -45,7 +45,7 @@ O fim é consultado com `VerificarFim(estado Estado) Desfecho`, que devolve `ter
 
 #### Exemplo de relatório de etapa
 
-Em cada jogador, `acao` é a ação do plano para a etapa e `resultado` diz o que aconteceu com ela (DEC-09): `EXECUTADA`, `BLOQUEADA` (MOV-05), `ABORTADA` (etapa depois de um bloqueio, executada como `ESPERAR`), `DESCARTADA` (jogador morto) ou `IGNORADA` (ação impossível, RES-02). `jogadores` traz todos, na ordem do `Estado`; as listas de posições vêm ordenadas por `y` e depois por `x`.
+Em cada jogador, `acao` é a ação do plano para a etapa e `resultado` diz o que aconteceu com ela (DEC-09): `EXECUTADA`, `BLOQUEADA` (MOV-05), `ABORTADA` (etapa depois de um bloqueio, executada como `ESPERAR`), `DESCARTADA` (jogador morto) ou `IGNORADA` (ação impossível, RES-02). `blocos_fechados` traz as casas que viraram bloco fixo pelo fechamento (FEC-03); só a última etapa do turno pode tê-las, e as mortes do fechamento (FEC-04) entram em `mortes` dessa etapa. `jogadores` traz todos, na ordem do `Estado`; as listas de posições vêm ordenadas por `y` e depois por `x`.
 
 ```json
 {
@@ -71,7 +71,8 @@ Em cada jogador, `acao` é a ação do plano para a etapa e `resultado` diz o qu
   "chamas": [{"x": 3, "y": 6}, {"x": 4, "y": 6}, {"x": 5, "y": 6}, {"x": 6, "y": 6}, {"x": 7, "y": 6}],
   "mortes": ["jogador_2"],
   "blocos_destruidos": [{"x": 7, "y": 6}],
-  "movimentos_bloqueados": ["jogador_3"]
+  "movimentos_bloqueados": ["jogador_3"],
+  "blocos_fechados": []
 }
 ```
 

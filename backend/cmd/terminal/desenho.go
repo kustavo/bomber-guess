@@ -51,7 +51,8 @@ func (q *quadro) inicio(w io.Writer, estado jogo.Estado) {
 }
 
 // etapa desenha o tabuleiro ao fim da etapa e os eventos dela; depois remove
-// os blocos destruídos, que ficam livres a partir da próxima etapa (ORD-06).
+// os blocos destruídos, que ficam livres a partir da próxima etapa (ORD-06),
+// e acrescenta os blocos fixos do fechamento (FEC-03).
 func (q *quadro) etapa(w io.Writer, r jogo.RelatorioEtapa) {
 	fmt.Fprintf(w, "Turno %d, etapa %d\n", r.Turno, r.Etapa)
 	vivos := map[jogo.Posicao][]int{}
@@ -74,8 +75,15 @@ func (q *quadro) etapa(w io.Writer, r jogo.RelatorioEtapa) {
 	if len(r.MovimentosBloqueados) > 0 {
 		fmt.Fprintf(w, "bloqueados: %s\n", strings.Join(r.MovimentosBloqueados, ", "))
 	}
+	if len(r.BlocosFechados) > 0 {
+		fmt.Fprintf(w, "fechamento: %d casas\n", len(r.BlocosFechados))
+	}
 	for _, p := range r.BlocosDestruidos {
 		delete(q.destrutiveis, p)
+	}
+	for _, p := range r.BlocosFechados { // FEC-03, FEC-05
+		delete(q.destrutiveis, p)
+		q.fixos[p] = true
 	}
 }
 

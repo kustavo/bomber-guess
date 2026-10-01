@@ -56,6 +56,9 @@ func VerificarMapa(m Mapa) error {
 			return fmt.Errorf("%w: %s %d deve ser pelo menos 1", ErrMapaInvalido, c.campo, c.valor)
 		}
 	}
+	if f := m.Config.TurnoFechamento; f < 0 || f >= 1 && f >= m.Config.LimiteTurnos { // FEC-01
+		return fmt.Errorf("%w: turno_fechamento %d deve ser 0 ou estar entre 1 e limite_turnos − 1", ErrMapaInvalido, f)
+	}
 	fixos := make(map[Posicao]bool, len(m.BlocosFixos))
 	for _, p := range m.BlocosFixos {
 		if !m.Config.NoTabuleiro(p) {

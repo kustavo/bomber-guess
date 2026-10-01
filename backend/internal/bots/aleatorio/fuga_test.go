@@ -102,6 +102,18 @@ func TestFuga(t *testing.T) {
 			esperado: seguro,
 		},
 		{
+			nome: "FEC-04 sai da borda que fecha ao fim do turno",
+			desenho: `
+				1....
+				.....
+				.....
+				.....
+				....2
+			`,
+			opcoes:   []opcao{func(e *jogo.Estado) { e.Config.TurnoFechamento = e.Turno }},
+			esperado: seguro,
+		},
+		{
 			nome:     "CA-19 sem plano seguro, devolve plano sobrevivente",
 			desenho:  "1.+..2",
 			opcoes:   []opcao{comBomba(1, 0, "jogador_2", 2, 9)},

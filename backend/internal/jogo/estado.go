@@ -11,8 +11,9 @@ type Config struct {
 	Largura             int `json:"largura"`
 	Altura              int `json:"altura"`
 	LimiteTurnos        int `json:"limite_turnos"`
-	PrazoPlanejamentoMs int `json:"prazo_planejamento_ms"` // EST-01
-	DuracaoEtapaMs      int `json:"duracao_etapa_ms"`      // EST-02
+	TurnoFechamento     int `json:"turno_fechamento,omitempty"` // EST-09, FEC-01: 0 desliga
+	PrazoPlanejamentoMs int `json:"prazo_planejamento_ms"`      // EST-01
+	DuracaoEtapaMs      int `json:"duracao_etapa_ms"`           // EST-02
 }
 
 // Atributos que valem para as bombas e o plano de um jogador.

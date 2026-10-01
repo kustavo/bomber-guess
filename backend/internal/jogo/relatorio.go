@@ -41,4 +41,5 @@ type RelatorioEtapa struct {
 	Mortes               []string       `json:"mortes"`                // ids dos que morreram nesta etapa
 	BlocosDestruidos     []Posicao      `json:"blocos_destruidos"`     // sem repetição (DEC-01)
 	MovimentosBloqueados []string       `json:"movimentos_bloqueados"` // ids
+	BlocosFechados       []Posicao      `json:"blocos_fechados"`       // FEC-03: só na última etapa do turno
 }

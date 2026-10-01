@@ -97,6 +97,21 @@ func TestDesenharEtapa(t *testing.T) {
 	}
 }
 
+func TestFechamentoViraBlocoFixo(t *testing.T) {
+	q := novoQuadro(estadoDesenho())
+	vivos := []jogo.JogadorEtapa{jogadorEtapa("jogador_1", pos(2, 1), jogo.Vivo)}
+	borda := []jogo.Posicao{pos(0, 0), pos(1, 0), pos(2, 0), pos(3, 0), pos(4, 0), pos(0, 1), pos(4, 1), pos(0, 2), pos(1, 2), pos(2, 2), pos(3, 2), pos(4, 2)}
+	var fim, depois strings.Builder
+	q.etapa(&fim, jogo.RelatorioEtapa{Turno: 3, Etapa: 7, Jogadores: vivos, BlocosFechados: borda})
+	q.etapa(&depois, jogo.RelatorioEtapa{Turno: 4, Etapa: 1, Jogadores: vivos})
+	if !strings.HasSuffix(fim.String(), "fechamento: 12 casas\n") {
+		t.Errorf("FEC-03 evento ausente:\n%s", fim.String())
+	}
+	if obtido, esperado := depois.String(), "Turno 4, etapa 1\n#####\n##1+#\n#####\n"; obtido != esperado {
+		t.Errorf("FEC-03 FEC-05 obtido:\n%s\nesperado:\n%s", obtido, esperado)
+	}
+}
+
 func TestBlocoDestruidoViraCasaLivre(t *testing.T) {
 	q := novoQuadro(estadoDesenho())
 	vivos := []jogo.JogadorEtapa{jogadorEtapa("jogador_1", pos(0, 0), jogo.Vivo)}

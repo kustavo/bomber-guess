@@ -157,6 +157,7 @@ func classificar(e jogo.Estado, jogadorID string, plano []jogo.Acao) categoria {
 		return seguro
 	}
 	resto := final.Copiar()
+	resto.Config.TurnoFechamento = 0 // só as bombas: o fechamento do turno seguinte não conta
 	for i := range resto.Bombas {
 		resto.Bombas[i].PavioRestante = 1
 	}

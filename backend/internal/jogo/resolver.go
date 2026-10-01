@@ -49,6 +49,9 @@ func ResolverTurno(estado Estado, planos []Plano) (Estado, []RelatorioEtapa) {
 			break
 		}
 	}
+	if m.vivos() > 1 { // FEC-07
+		m.fechar(&relatorios[len(relatorios)-1]) // ORD-08
+	}
 	return m.novoEstado(), relatorios
 }
 
@@ -91,6 +94,7 @@ func (m *mesa) resolverEtapa() RelatorioEtapa {
 		Jogadores:            make([]JogadorEtapa, len(m.jogadores)),
 		Mortes:               []string{},
 		MovimentosBloqueados: []string{},
+		BlocosFechados:       []Posicao{},
 	}
 	var plantios []Bomba
 	for i := range m.jogadores {

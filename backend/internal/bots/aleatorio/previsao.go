@@ -15,7 +15,7 @@ var fora = jogo.Posicao{X: -1, Y: -1}
 // estado, dois fantasmas fora do tabuleiro com acoes_por_turno = etapas e, se
 // eu != nil, o próprio jogador com as ações dadas (D1, D2, D4). A zona de
 // perigo final é a união das chamas de todas as bombas que sobram, explodindo
-// juntas (D3).
+// juntas (D3), mais as casas que fecham ao fim do turno (FEC-04).
 func preverLinha(estado jogo.Estado, etapas int, eu *jogo.Jogador, acoes []jogo.Acao) linha {
 	aux := auxiliar(estado, etapas)
 	var planos []jogo.Plano
@@ -33,6 +33,10 @@ func preverLinha(estado jogo.Estado, etapas int, eu *jogo.Jogador, acoes []jogo.
 		for _, p := range r.Chamas {
 			l.chamas[r.Etapa][p] = true
 		}
+	}
+
+	for _, p := range jogo.CasasQueFecham(estado) { // FEC-04: fecha ao fim do turno
+		l.perigo[p] = true
 	}
 
 	resto := auxiliar(final, 1)
@@ -55,6 +59,7 @@ func auxiliar(estado jogo.Estado, etapas int) jogo.Estado {
 	aux := estado.Copiar()
 	aux.Turno = 1
 	aux.Config.LimiteTurnos = 1
+	aux.Config.TurnoFechamento = 0 // o fechamento entra em preverLinha (FEC-03)
 	aux.EtapasNesteTurno = etapas
 	aux.Jogadores = []jogo.Jogador{}
 	for _, id := range []string{"~fantasma_1", "~fantasma_2"} {

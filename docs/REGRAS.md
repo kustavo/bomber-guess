@@ -30,6 +30,8 @@ Cada regra tem um **ID estável** (ex.: `BOM-05`). Specs, testes e commits citam
 - **Bot**: jogador controlado por uma implementação da interface `Bot`.
 - **Catálogo de bots**: lista das versões de bot disponíveis (`GET /bots`).
 - **Relatório de etapa** (`RelatorioEtapa`): o que aconteceu em uma etapa: posições, ações executadas, bombas, explosões, mortes e blocos destruídos. Usado no replay e no registro.
+- **Fechamento**: a partir de `turno_fechamento`, ao fim de cada turno o anel mais externo ainda aberto do tabuleiro vira bloco fixo, matando quem estiver nele (FEC-01 a FEC-07). Existe para evitar empates.
+- **Anel**: conjunto das casas a uma mesma distância da borda; o anel 0 é a borda (FEC-02).
 - **Desfecho** (`Desfecho`): situação da partida deduzida do estado: em andamento, vitória de um jogador ou empate (DEC-06).
 
 ## 1. Tabuleiro e coordenadas
@@ -50,6 +52,7 @@ No início de cada turno, o estado completo é representado assim:
       "largura": 15,
       "altura": 13,
       "limite_turnos": 50,
+      "turno_fechamento": 30,
       "prazo_planejamento_ms": 1000,
       "duracao_etapa_ms": 5
   },
@@ -100,6 +103,7 @@ Detalhes dos campos:
 - **EST-06** `status`: `VIVO` ou `MORTO`.
 - **EST-07** `morte`: turno e etapa em que o jogador morreu. Ausente enquanto ele está vivo.
 - **EST-08** `posicao` de um jogador morto é a casa onde ele morreu; ele não ocupa mais o tabuleiro (FIM-01).
+- **EST-09** `turno_fechamento`: turno a partir do qual o tabuleiro começa a fechar (FEC-01). Opcional; ausente ou `0` desliga o fechamento.
 
 ## 3. Ações
 
@@ -167,6 +171,7 @@ Formato do **plano** de um jogador para um turno:
 - **ORD-05** **Mortes**: jogadores em casas atingidas morrem.
 - **ORD-06** **Blocos**: blocos destrutíveis atingidos são removidos e ficam transitáveis a partir da próxima etapa.
 - **ORD-07** Consequência prática: um jogador que sai do alcance da explosão na mesma etapa em que ela acontece sobrevive, porque o movimento é resolvido antes.
+- **ORD-08** **Fechamento**: depois da última etapa do turno (após ORD-06), aplica-se o fechamento do tabuleiro, se houver (FEC-03).
 
 ## 7. Morte, vitória e empate
 
@@ -174,6 +179,18 @@ Formato do **plano** de um jogador para um turno:
 - **FIM-02** Vence o último jogador vivo.
 - **FIM-03** Se todos os jogadores restantes morrerem na mesma etapa, a partida termina em empate.
 - **FIM-04** Ao atingir `limite_turnos`, a partida termina em empate entre os sobreviventes.
+
+### Fechamento do tabuleiro
+
+Para evitar empates, o tabuleiro fecha de fora para dentro a partir de um turno configurado.
+
+- **FEC-01** O fechamento é ligado por `turno_fechamento` (EST-09) com valor ≥ 1. Ausente ou `0`, nada desta seção se aplica.
+- **FEC-02** **Anel** `n` é o conjunto das casas `(x, y)` com `min(x, y, largura − 1 − x, altura − 1 − y) = n`. O anel 0 é a borda do tabuleiro; o anel 1 é a borda do que sobra dentro dela; e assim por diante.
+- **FEC-03** Ao fim de cada turno `T ≥ turno_fechamento`, depois da última etapa executada (ORD-08), o anel `T − turno_fechamento` vira bloco fixo: toda casa desse anel passa a estar em `blocos_fixos`. Ex.: com `turno_fechamento` 30, a borda fecha ao fim do turno 30, o anel 1 ao fim do turno 31. Quando o anel não tem mais casas (o tabuleiro já fechou por completo), nada acontece.
+- **FEC-04** Jogador vivo em uma casa que fecha morre. A morte é registrada no turno `T` e na última etapa executada desse turno (EST-07). Se com isso todos os restantes morrerem, é empate (FIM-03).
+- **FEC-05** Bloco destrutível em uma casa que fecha deixa de existir e vira bloco fixo; não conta como bloco destruído.
+- **FEC-06** Bombas em uma casa que fecha são removidas sem explodir.
+- **FEC-07** Se a partida terminou no meio do turno (DEC-06), não há fechamento nesse turno.
 
 ## 8. Decisões
 
