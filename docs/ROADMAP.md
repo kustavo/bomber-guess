@@ -20,6 +20,7 @@ Cada marco segue o fluxo de `specs/README.md` (`/especificar` → `/planejar` �
 | 12 | Fechamento do tabuleiro | REGRAS (seções 2, 6 e 7), ARQUITETURA (seção 1.2) | médio |
 | 13 | Bot aleatorio-v2 (sobrevive ao fechamento) | BOTS, REGRAS | médio |
 | 14 | Visual do tabuleiro (sprites) | specs 06 e 07 (telas do tabuleiro e do editor) | barato |
+| 15 | Bot aleatorio-v3 (mais de uma bomba por turno) | BOTS, REGRAS | médio |
 
 ## 1. Tipos em Go
 
@@ -90,6 +91,10 @@ Mesmo jeito do `aleatorio-v1`, mas se prepara para o fechamento: vai para o cent
 ## 14. Visual do tabuleiro
 
 Trocar os quadrados e círculos do tabuleiro por sprites em pixel art, originais e inspirados em Bomberman: piso, bloco fixo, bloco destrutível, bomba, chama e jogador na cor de cada um. Valem para a tela de assistir (marco 6) e para o editor (marco 7), com animação básica em CSS.
+
+## 15. Bot aleatorio-v3
+
+Mesmo jeito do `aleatorio-v2`, mas sem o limite de uma bomba por turno do v1 (marco 3, decisão 5): quando houver plano seguro, pode plantar até `bombas_por_turno`, inclusive bombas que só explodem no turno seguinte. O v1 e o v2 continuam no catálogo sem mudanças.
 
 ## Versão 2 (depois de tudo acima)
 

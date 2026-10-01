@@ -15,6 +15,24 @@ type resultado struct {
 	somaDosAneis   int // soma dos anéis das mortes por fechamento
 	porBomba       int
 	fechouComSaida int // mortes por fechamento com saída no início do turno
+	// bombas conta, por versão, os jogadores-turno com 0, 1, 2… PLANTAR
+	// executados (CA-12 do marco 15).
+	bombas map[string]map[int]int
+}
+
+// somarBombas acumula as contagens de bombas de r em total.
+func (total *resultado) somarBombas(r resultado) {
+	if total.bombas == nil {
+		total.bombas = map[string]map[int]int{}
+	}
+	for v, porN := range r.bombas {
+		if total.bombas[v] == nil {
+			total.bombas[v] = map[int]int{}
+		}
+		for n, c := range porN {
+			total.bombas[v][n] += c
+		}
+	}
 }
 
 // anelMedio é o anel médio das mortes por fechamento (0 se não houve).
@@ -38,7 +56,7 @@ func jogarComparacao(t *testing.T, m jogo.Mapa, bots []*Bot) resultado {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var r resultado
+	r := resultado{bombas: map[string]map[int]int{}}
 	for !jogo.VerificarFim(e).Terminada {
 		planos := make([]jogo.Plano, 0, len(bots))
 		for i, j := range e.Jogadores {
@@ -54,6 +72,22 @@ func jogarComparacao(t *testing.T, m jogo.Mapa, bots []*Bot) resultado {
 		inicio := e
 		var relatorios []jogo.RelatorioEtapa
 		e, relatorios = jogo.ResolverTurno(e, planos)
+		plantados := map[string]int{}
+		for _, rel := range relatorios {
+			for _, j := range rel.Jogadores {
+				if j.Acao.Tipo == jogo.Plantar && j.Resultado == jogo.Executada {
+					plantados[j.ID]++
+				}
+			}
+		}
+		for _, j := range inicio.Jogadores {
+			if j.Status == jogo.Vivo {
+				if r.bombas[j.BotVersao] == nil {
+					r.bombas[j.BotVersao] = map[int]int{}
+				}
+				r.bombas[j.BotVersao][plantados[j.ID]]++
+			}
+		}
 		for _, rel := range relatorios {
 			chamas := conjuntoDe(rel.Chamas)
 			fechadas := conjuntoDe(rel.BlocosFechados)
@@ -117,6 +151,7 @@ func compararEmParalelo(t *testing.T, m jogo.Mapa, montar func(semente uint64) [
 				total.somaDosAneis += r.somaDosAneis
 				total.porBomba += r.porBomba
 				total.fechouComSaida += r.fechouComSaida
+				total.somarBombas(r)
 				if r.vencedor == "" {
 					empates++
 				} else {
@@ -156,4 +191,20 @@ func TestComparacaoNoMapaExemplo(t *testing.T) {
 	if vitorias[VersaoV2] < 2*vitorias[Versao] {
 		t.Errorf("CA-15 v2 venceu %d, v1 venceu %d: esperado pelo menos o dobro", vitorias[VersaoV2], vitorias[Versao])
 	}
+}
+
+func TestComparacaoV3NoMapaExemplo(t *testing.T) {
+	m := lerMapaExemplo(t)
+	v3, _, empatesV3 := compararEmParalelo(t, m, quatro(NovoV3))
+	t.Logf("CA-12 4×v3: bombas por jogador-turno %v; %d mortes por fechamento, %d por bomba, %d empates",
+		v3.bombas[VersaoV3], v3.porFechamento, v3.porBomba, empatesV3)
+
+	total, vitorias, empates := compararEmParalelo(t, m, func(s uint64) []*Bot {
+		if s%2 == 1 { // alterna as posições, como no CA-15 do marco 13
+			return []*Bot{NovoV2(s), NovoV3(s), NovoV2(s), NovoV3(s)}
+		}
+		return []*Bot{NovoV3(s), NovoV2(s), NovoV3(s), NovoV2(s)}
+	})
+	t.Logf("CA-12 2×v2 + 2×v3: vitórias %v, %d empates; bombas v2 %v, v3 %v; %d mortes por fechamento, %d por bomba",
+		vitorias, empates, total.bombas[VersaoV2], total.bombas[VersaoV3], total.porFechamento, total.porBomba)
 }

@@ -16,6 +16,9 @@ func TestVersao(t *testing.T) {
 		if v := NovoV2(semente).Versao(); v != "aleatorio-v2" {
 			t.Errorf("BOT-01 CA-01 v2 semente %d: Versao() = %q", semente, v)
 		}
+		if v := NovoV3(semente).Versao(); v != "aleatorio-v3" {
+			t.Errorf("BOT-01 CA-01 (marco 15) v3 semente %d: Versao() = %q", semente, v)
+		}
 	}
 }
 

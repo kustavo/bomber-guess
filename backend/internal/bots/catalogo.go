@@ -22,6 +22,7 @@ func Padrao() Catalogo {
 	return Catalogo{
 		aleatorio.Versao:   func(s uint64) jogo.Bot { return aleatorio.Novo(s) },
 		aleatorio.VersaoV2: func(s uint64) jogo.Bot { return aleatorio.NovoV2(s) },
+		aleatorio.VersaoV3: func(s uint64) jogo.Bot { return aleatorio.NovoV3(s) },
 	}
 }
 

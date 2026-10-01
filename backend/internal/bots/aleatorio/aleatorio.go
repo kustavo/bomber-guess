@@ -12,18 +12,21 @@ import (
 )
 
 // Versões do bot: o v2 é o v1 preparado para o fechamento do tabuleiro
-// (specs/13-aleatorio-v2).
+// (specs/13-aleatorio-v2); o v3 é o v2 sem o limite de uma bomba por turno
+// (specs/15-aleatorio-v3).
 const (
 	Versao   = "aleatorio-v1"
 	VersaoV2 = "aleatorio-v2"
+	VersaoV3 = "aleatorio-v3"
 )
 
 // Bot anda aleatoriamente, planta bombas de vez em quando e foge das
 // explosões que consegue prever. Não guarda estado entre chamadas: o plano
 // depende só da semente, do estado e do jogador.
 type Bot struct {
-	semente  uint64
-	antecipa bool // v2: prepara-se para o fechamento (D1 do marco 13)
+	semente      uint64
+	antecipa     bool // v2 e v3: prepara-se para o fechamento (D1 do marco 13)
+	variasBombas bool // v3: até bombas_por_turno bombas por turno (D1 do marco 15)
 }
 
 var _ jogo.Bot = (*Bot)(nil)
@@ -38,8 +41,16 @@ func NovoV2(semente uint64) *Bot {
 	return &Bot{semente: semente, antecipa: true}
 }
 
-// Versao devolve "aleatorio-v1" ou "aleatorio-v2".
+// NovoV3 cria o aleatorio-v3 com a semente dada.
+func NovoV3(semente uint64) *Bot {
+	return &Bot{semente: semente, antecipa: true, variasBombas: true}
+}
+
+// Versao devolve "aleatorio-v1", "aleatorio-v2" ou "aleatorio-v3".
 func (b *Bot) Versao() string {
+	if b.variasBombas {
+		return VersaoV3
+	}
 	if b.antecipa {
 		return VersaoV2
 	}
@@ -59,7 +70,11 @@ func (b *Bot) Planejar(estado jogo.Estado, jogadorID string) []jogo.Acao {
 		return numerar(planejarNaJanela(rng, estado, eu, etapas)[:eu.AcoesPorTurno])
 	}
 	if eu.BombasPorTurno >= 1 && rng.IntN(2) == 0 { // decisão 5, D8
-		if passos, ok := tentarPlantar(rng, estado, eu, etapas); ok {
+		plantar := tentarPlantar
+		if b.variasBombas && eu.BombasPorTurno >= 2 { // v3: D1 do marco 15
+			plantar = planejarComBombas
+		}
+		if passos, ok := plantar(rng, estado, eu, etapas); ok {
 			return numerar(passos[:eu.AcoesPorTurno])
 		}
 	}
