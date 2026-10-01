@@ -18,6 +18,64 @@ type resultado struct {
 	// bombas conta, por versão, os jogadores-turno com 0, 1, 2… PLANTAR
 	// executados (CA-12 do marco 15).
 	bombas map[string]map[int]int
+	// causas conta as mortes por causaDaMorte (CA-13 e CA-15 do marco 16).
+	causas map[string]int
+}
+
+// Causas de morte do diagnóstico do marco 16 (D8).
+const (
+	causaFechamento         = "fechamento"
+	causaPropria            = "própria bomba"
+	causaPropriaEAdversario = "própria bomba e de adversário"
+	causaAdversarioAntiga   = "bomba de adversário já no tabuleiro"
+	causaAdversarioDoTurno  = "bomba de adversário do mesmo turno"
+	causaOutra              = "outra"
+)
+
+// causaDaMorte classifica a morte de `id` na etapa de índice k dos
+// relatórios do turno que começou em `inicio`: olha as explosões da etapa que
+// alcançam a casa e o dono das bombas nas origens (as do fim da etapa
+// anterior). Bomba "do mesmo turno" é a que não estava no início do turno.
+func causaDaMorte(inicio jogo.Estado, relatorios []jogo.RelatorioEtapa, k int, id string, casa jogo.Posicao) string {
+	r := relatorios[k]
+	antes := inicio.Bombas
+	if k > 0 {
+		antes = relatorios[k-1].Bombas
+	}
+	iniciais := map[jogo.Posicao]bool{}
+	for _, b := range inicio.Bombas {
+		iniciais[b.Posicao] = true
+	}
+	propria, antiga, doTurno := false, false, false
+	for _, x := range r.Explosoes {
+		if !conjuntoDe(x.Chamas)[casa] {
+			continue
+		}
+		for _, b := range antes {
+			switch {
+			case b.Posicao != x.Origem:
+			case b.JogadorID == id:
+				propria = true
+			case iniciais[b.Posicao]:
+				antiga = true
+			default:
+				doTurno = true
+			}
+		}
+	}
+	switch {
+	case propria && (antiga || doTurno):
+		return causaPropriaEAdversario
+	case propria:
+		return causaPropria
+	case antiga:
+		return causaAdversarioAntiga
+	case doTurno:
+		return causaAdversarioDoTurno
+	case conjuntoDe(r.BlocosFechados)[casa]:
+		return causaFechamento
+	}
+	return causaOutra
 }
 
 // somarBombas acumula as contagens de bombas de r em total.
@@ -56,7 +114,7 @@ func jogarComparacao(t *testing.T, m jogo.Mapa, bots []*Bot) resultado {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := resultado{bombas: map[string]map[int]int{}}
+	r := resultado{bombas: map[string]map[int]int{}, causas: map[string]int{}}
 	for !jogo.VerificarFim(e).Terminada {
 		planos := make([]jogo.Plano, 0, len(bots))
 		for i, j := range e.Jogadores {
@@ -88,11 +146,12 @@ func jogarComparacao(t *testing.T, m jogo.Mapa, bots []*Bot) resultado {
 				r.bombas[j.BotVersao][plantados[j.ID]]++
 			}
 		}
-		for _, rel := range relatorios {
+		for k, rel := range relatorios {
 			chamas := conjuntoDe(rel.Chamas)
 			fechadas := conjuntoDe(rel.BlocosFechados)
 			for _, id := range rel.Mortes {
 				eu, _ := encontrar(e, id)
+				r.causas[causaDaMorte(inicio, relatorios, k, id, eu.Posicao)]++
 				switch {
 				case !chamas[eu.Posicao] && fechadas[eu.Posicao]:
 					r.porFechamento++
@@ -152,6 +211,12 @@ func compararEmParalelo(t *testing.T, m jogo.Mapa, montar func(semente uint64) [
 				total.porBomba += r.porBomba
 				total.fechouComSaida += r.fechouComSaida
 				total.somarBombas(r)
+				if total.causas == nil {
+					total.causas = map[string]int{}
+				}
+				for c, n := range r.causas {
+					total.causas[c] += n
+				}
 				if r.vencedor == "" {
 					empates++
 				} else {
@@ -207,4 +272,27 @@ func TestComparacaoV3NoMapaExemplo(t *testing.T) {
 	})
 	t.Logf("CA-12 2×v2 + 2×v3: vitórias %v, %d empates; bombas v2 %v, v3 %v; %d mortes por fechamento, %d por bomba",
 		vitorias, empates, total.bombas[VersaoV2], total.bombas[VersaoV3], total.porFechamento, total.porBomba)
+}
+
+func TestComparacaoV4NoMapaExemplo(t *testing.T) {
+	m := lerMapaExemplo(t)
+	v3, _, empatesV3 := compararEmParalelo(t, m, quatro(NovoV3))
+	v4, _, empatesV4 := compararEmParalelo(t, m, quatro(NovoV4))
+	t.Logf("CA-15 4×v3: mortes %v, %d empates", v3.causas, empatesV3)
+	t.Logf("CA-15 4×v4: mortes %v, %d empates", v4.causas, empatesV4)
+	if 10*v4.causas[causaAdversarioDoTurno] > 7*v3.causas[causaAdversarioDoTurno] {
+		t.Errorf("CA-13 v4 com %d mortes por bomba de adversário do mesmo turno, limite 70%% de %d",
+			v4.causas[causaAdversarioDoTurno], v3.causas[causaAdversarioDoTurno])
+	}
+
+	misto, vitorias, empates := compararEmParalelo(t, m, func(s uint64) []*Bot {
+		if s%2 == 1 { // alterna as posições
+			return []*Bot{NovoV3(s), NovoV4(s), NovoV3(s), NovoV4(s)}
+		}
+		return []*Bot{NovoV4(s), NovoV3(s), NovoV4(s), NovoV3(s)}
+	})
+	t.Logf("CA-15 2×v3 + 2×v4: vitórias %v, %d empates, mortes %v", vitorias, empates, misto.causas)
+	if 2*vitorias[VersaoV4] < 3*vitorias[VersaoV3] {
+		t.Errorf("CA-14 v4 venceu %d, v3 venceu %d: esperado pelo menos 1,5 vez", vitorias[VersaoV4], vitorias[VersaoV3])
+	}
 }

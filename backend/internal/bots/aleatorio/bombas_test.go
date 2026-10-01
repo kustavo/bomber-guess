@@ -52,7 +52,7 @@ func TestTentarPlantarVarias(t *testing.T) {
 		etapas := jogo.CalcularEtapas(e.Jogadores)
 		achou, atravessa := 0, 0
 		for semente := uint64(1); semente <= 50; semente++ {
-			passos, ok := tentarPlantarVarias(rand.New(rand.NewPCG(semente, 0)), e, eu, etapas, 2)
+			passos, ok := tentarPlantarVarias(rand.New(rand.NewPCG(semente, 0)), e, eu, etapas, 2, nil)
 			if !ok {
 				continue
 			}
@@ -82,7 +82,7 @@ func TestTentarPlantarVarias(t *testing.T) {
 		`)
 		eu, _ := encontrar(e, "jogador_1")
 		for semente := uint64(1); semente <= 20; semente++ {
-			if passos, ok := tentarPlantarVarias(rand.New(rand.NewPCG(semente, 0)), e, eu, jogo.CalcularEtapas(e.Jogadores), 2); ok {
+			if passos, ok := tentarPlantarVarias(rand.New(rand.NewPCG(semente, 0)), e, eu, jogo.CalcularEtapas(e.Jogadores), 2, nil); ok {
 				t.Fatalf("semente %d: plano no cercado: %+v", semente, passos)
 			}
 		}

@@ -21,6 +21,7 @@ Cada marco segue o fluxo de `specs/README.md` (`/especificar` → `/planejar` �
 | 13 | Bot aleatorio-v2 (sobrevive ao fechamento) | BOTS, REGRAS | médio |
 | 14 | Visual do tabuleiro (sprites) | specs 06 e 07 (telas do tabuleiro e do editor) | barato |
 | 15 | Bot aleatorio-v3 (mais de uma bomba por turno) | BOTS, REGRAS | médio |
+| 16 | Bot aleatorio-v4 (prevê bombas dos adversários) | BOTS, REGRAS | médio/forte |
 
 ## 1. Tipos em Go
 
@@ -95,6 +96,10 @@ Trocar os quadrados e círculos do tabuleiro por sprites em pixel art, originais
 ## 15. Bot aleatorio-v3
 
 Mesmo jeito do `aleatorio-v2`, mas sem o limite de uma bomba por turno do v1 (marco 3, decisão 5): quando houver plano seguro, pode plantar até `bombas_por_turno`, inclusive bombas que só explodem no turno seguinte. O v1 e o v2 continuam no catálogo sem mudanças.
+
+## 16. Bot aleatorio-v4
+
+O v3 prevê o turno com os adversários parados, e por isso não enxerga as bombas que eles plantam no mesmo turno: em 200 partidas com 4 v3, essas bombas causaram 349 de 542 mortes. O v4 é o v3 mais uma **zona de ameaça**: as casas que as bombas que cada adversário ainda pode plantar no turno conseguem alcançar, etapa por etapa. Ele prefere planos que fiquem fora dela. v1, v2 e v3 continuam no catálogo sem mudanças.
 
 ## Versão 2 (depois de tudo acima)
 

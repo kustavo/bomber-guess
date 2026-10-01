@@ -37,10 +37,14 @@ func TestPlantaComPlanoSeguro(t *testing.T) {
 			nome    string
 			desenho string
 			opcoes  []opcao
+			// semBombaNoV4: no v4, todo plano com bomba fica num nível de
+			// proteção pior que o melhor sem bomba, e ele não planta (R3 do
+			// marco 16).
+			semBombaNoV4 bool
 		}{
-			{"BOM-05 CA-21 campo aberto", campoAberto, nil},
-			{"BOM-11 CA-21 campo aberto, turno curto", campoAberto, []opcao{comAtributos("jogador_1", func(a *jogo.Atributos) { a.AcoesPorTurno = 3 })}},
-			{"BOM-09 CA-21 com bombas no tabuleiro", campoAberto, []opcao{comBomba(3, 2, "jogador_2", 2, 3), comBomba(3, 0, "jogador_2", 1, 8)}},
+			{"BOM-05 CA-21 campo aberto", campoAberto, nil, false},
+			{"BOM-11 CA-21 campo aberto, turno curto", campoAberto, []opcao{comAtributos("jogador_1", func(a *jogo.Atributos) { a.AcoesPorTurno = 3 })}, true},
+			{"BOM-09 CA-21 com bombas no tabuleiro", campoAberto, []opcao{comBomba(3, 2, "jogador_2", 2, 3), comBomba(3, 0, "jogador_2", 1, 8)}, false},
 		}
 		for _, c := range casos {
 			t.Run(c.nome, func(t *testing.T) {
@@ -56,7 +60,12 @@ func TestPlantaComPlanoSeguro(t *testing.T) {
 						t.Fatalf("semente %d: plano com bomba %s: %+v", semente, obtido, plano)
 					}
 				}
-				if plantou == 0 {
+				switch {
+				case c.semBombaNoV4 && novo(1).Versao() == VersaoV4:
+					if plantou > 0 {
+						t.Errorf("CA-02 R3 (marco 16) o v4 plantou em %d sementes", plantou)
+					}
+				case plantou == 0:
 					t.Error("nenhuma semente plantou")
 				}
 			})

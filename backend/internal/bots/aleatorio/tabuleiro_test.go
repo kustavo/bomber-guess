@@ -174,7 +174,7 @@ type versaoDeTeste struct {
 	novo func(semente uint64) *Bot
 }
 
-var versoesDeTeste = []versaoDeTeste{{Versao, Novo}, {VersaoV2, NovoV2}, {VersaoV3, NovoV3}}
+var versoesDeTeste = []versaoDeTeste{{Versao, Novo}, {VersaoV2, NovoV2}, {VersaoV3, NovoV3}, {VersaoV4, NovoV4}}
 
 // paraCadaVersao roda f num subteste por versão do bot (CA-02 do marco 13).
 func paraCadaVersao(t *testing.T, f func(t *testing.T, novo func(uint64) *Bot)) {

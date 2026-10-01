@@ -10,9 +10,9 @@ import (
 // planejarNaJanela escolhe o plano do v2 dentro da janela de antecipação,
 // pela ordem da decisão 3 do marco 13. Devolve os passos de todas as etapas
 // do turno.
-func planejarNaJanela(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapas int) []jogo.Acao {
+func planejarNaJanela(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapas int, a *ameaca) []jogo.Acao {
 	c := estado.Config
-	l := preverLinha(estado, etapas, nil, nil)
+	l := preverLinha(estado, etapas, nil, nil, a)
 	bloq := bloqueios(estado)
 	alvo := anelAlvo(c, estado.Turno)
 	reg := regiao(bloq, c, eu.Posicao)
@@ -34,7 +34,7 @@ func planejarNaJanela(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapa
 
 	// Item 2: preso, bomba de abertura (D7).
 	if preso && len(destinos) > 0 && eu.BombasPorTurno >= 1 {
-		if passos, ok := tentarAbrir(rng, estado, eu, etapas, destinos, bloq); ok {
+		if passos, ok := tentarAbrir(rng, estado, eu, etapas, destinos, bloq, a); ok {
 			return completar(passos, etapas)
 		}
 	}
@@ -77,7 +77,7 @@ func planejarNaJanela(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapa
 // da mais perto para a mais longe (empates sorteados), indo pelo caminho mais
 // curto e plantando na etapa seguinte à chegada. Aceita o primeiro plano em
 // que o jogador sobrevive até plantar e tem continuação segura (D7).
-func tentarAbrir(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapas int, plantio []jogo.Posicao, bloq map[jogo.Posicao]bool) ([]jogo.Acao, bool) {
+func tentarAbrir(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapas int, plantio []jogo.Posicao, bloq map[jogo.Posicao]bool, a *ameaca) ([]jogo.Acao, bool) {
 	c := estado.Config
 	deMim := distancias(bloq, c, []jogo.Posicao{eu.Posicao})
 	var candidatas []jogo.Posicao
@@ -92,7 +92,7 @@ func tentarAbrir(rng *rand.Rand, estado jogo.Estado, eu jogo.Jogador, etapas int
 		passos, casas := caminhoAte(bloq, c, eu.Posicao, casa)
 		k := len(passos) + 1
 		passos = append(passos, jogo.Acao{Tipo: jogo.Plantar})
-		l := preverLinha(estado, etapas, &eu, numerar(append([]jogo.Acao{}, passos...)))
+		l := preverLinha(estado, etapas, &eu, numerar(append([]jogo.Acao{}, passos...)), a)
 		if !sobrevive(l, casas, k) {
 			continue
 		}

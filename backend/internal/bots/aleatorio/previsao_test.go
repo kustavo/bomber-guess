@@ -108,7 +108,7 @@ func TestPreverLinha(t *testing.T) {
 				j, _ := encontrar(e, c.eu)
 				eu = &j
 			}
-			l := preverLinha(e, e.EtapasNesteTurno, eu, c.acoes)
+			l := preverLinha(e, e.EtapasNesteTurno, eu, c.acoes, nil)
 			if len(l.chamas) != e.EtapasNesteTurno+1 {
 				t.Fatalf("%d etapas de chamas, esperado %d", len(l.chamas)-1, e.EtapasNesteTurno)
 			}
@@ -128,7 +128,7 @@ func TestPreverLinhaIgnoraJogadores(t *testing.T) {
 	// D2: o jogador atingido morre na simulação real e a partida acaba (DEC-06),
 	// mas a linha do tempo continua até a última etapa.
 	e := montar(t, "1...2", comBomba(0, 0, "jogador_2", 1, 1), comBomba(4, 0, "jogador_1", 1, 5))
-	l := preverLinha(e, e.EtapasNesteTurno, nil, nil)
+	l := preverLinha(e, e.EtapasNesteTurno, nil, nil, nil)
 	if !l.chamas[5][jogo.Posicao{X: 4, Y: 0}] {
 		t.Errorf("DEC-06 chamas da etapa 5 ausentes: %v", l.chamas[5])
 	}
