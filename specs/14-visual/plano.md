@@ -74,6 +74,13 @@ explosoes: Explosao[]; // as da etapa exibida (CA-09)
 - **D9**: No editor, a ordem das camadas é: piso, itens e, por cima, os `<rect data-casa>` transparentes, que recebem clique, teclado e o realce de foco. **Motivo**: o CA-08 do marco 7 clica em `[data-casa]`. Assim o item nunca rouba o clique, e o foco do teclado continua visível.
 - **D10**: `shape-rendering: crispEdges` no `<symbol>` e `image-rendering: pixelated` no SVG do tabuleiro. **Motivo**: decisão 1, sprites nítidos ao ampliar (CA-14).
 
+## Reabertura (2026-10-01): CA-15 a CA-17
+
+- **D11** (CA-15): `Sprite` ganha a prop `centrado`, que põe `transform-origin` no centro da própria casa (`x + 0.5`, `y + 0.5`, em unidades do SVG). Em `sprites.css`, `.animada-bomba` usa `transform-box: view-box` e o pulso vai de `scale(1)` a `scale(1.04)` em 1,2 s. **Motivo**: com `fill-box`, o centro era o da caixa do desenho da bomba, e não o da casa; por isso ela parecia andar.
+- **D12** (CA-16): componente `Grade.svelte` (`largura`, `altura`) com um único `<path>` de linhas internas, `pointer-events="none"`, traço branco com opacidade 0,35 e espessura 0,03. No `Tabuleiro` ele entra depois dos blocos e antes das chamas; no `TabuleiroEditor`, depois dos blocos e antes das posições iniciais. As casas clicáveis do editor perdem o contorno escuro, mas mantêm o realce de hover e foco.
+- **D13** (CA-17): `JogadorExibido` ganha `bombas_por_turno` e `bombas_usadas`. `calcularTabuleiro` conta, nos relatórios das etapas 1…k, as ações `PLANTAR` com resultado `EXECUTADA` do jogador. `textos.ts` ganha `textoBombasUsadas(usadas, total)` → `"usou u de n (u/n)"`, e as restantes são `max(0, n − u)`.
+- **D14** (CA-17): o `Tabuleiro` passa a ficar dentro de um `<div class="caixa-tabuleiro">` com `position: relative`. O jogador sob o mouse (ou com foco) fica num estado local, e o cartão é um `<div data-cartao>` posicionado em porcentagem da casa, à direita do jogador (ou à esquerda, nas duas últimas colunas). O `<g>` do jogador ganha `tabindex="0"`, `role="button"`, `aria-label` com o resumo e `outline: none` (a lição do CA-21 do marco 7).
+
 ## Riscos
 
 - **Linhas finas entre casas** em alguns zooms, por arredondamento de subpixel. Mitigação: o piso de cada casa sobra 0,01 para os lados, ou os pixels de borda usam a mesma cor do vizinho. Confirmar na verificação manual (CA-14).

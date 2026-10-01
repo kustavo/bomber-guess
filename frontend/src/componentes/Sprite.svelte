@@ -10,9 +10,10 @@
     y: number;
     cor?: string;
     classe?: string;
+    centrado?: boolean; // transform-origin no centro da casa (spec 14, D11)
   }
 
-  let { nome, x, y, cor, classe }: Props = $props();
+  let { nome, x, y, cor, classe, centrado = false }: Props = $props();
 </script>
 
 <use
@@ -24,4 +25,5 @@
   height="1"
   class={classe}
   style:color={cor}
+  style:transform-origin={centrado ? `${x + 0.5}px ${y + 0.5}px` : undefined}
 />

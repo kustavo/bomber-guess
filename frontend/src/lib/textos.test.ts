@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { formatarTempo, textoAcao, textoDesfecho, textoFase } from './textos';
+import { formatarTempo, textoAcao, textoBombasUsadas, textoDesfecho, textoFase } from './textos';
 
 describe('textos', () => {
   test.each([
@@ -23,5 +23,13 @@ describe('textos', () => {
     expect(textoFase('EXECUCAO')).toBe('Execução');
     expect(textoAcao({ etapa: 1, tipo: 'MOVER', direcao: 'CIMA' })).toBe('Mover ↑');
     expect(textoAcao({ etapa: 1, tipo: 'PLANTAR' })).toBe('Plantar');
+  });
+
+  test.each([
+    { usadas: 0, total: 2, texto: 'usou 0 de 2 (0/2)' },
+    { usadas: 1, total: 2, texto: 'usou 1 de 2 (1/2)' },
+    { usadas: 3, total: 3, texto: 'usou 3 de 3 (3/3)' },
+  ])('CA-17 textoBombasUsadas($usadas, $total)', ({ usadas, total, texto }) => {
+    expect(textoBombasUsadas(usadas, total)).toBe(texto);
   });
 });

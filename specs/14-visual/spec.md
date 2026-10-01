@@ -1,6 +1,6 @@
 # Marco 14: visual do tabuleiro (sprites)
 
-**Status**: concluída
+**Status**: concluída (reaberta e concluída em 2026-10-01 com o CA-15 a CA-17)
 **Roadmap**: `docs/ROADMAP.md`, marco 14
 **Documentos de referência**: `specs/06-frontend/spec.md` (tabuleiro exibido, decisão 3) e `specs/07-editor/spec.md` (tabuleiro do editor)
 
@@ -77,6 +77,18 @@ Vitest + Testing Library com jsdom, como nos marcos 6 e 7, salvo menção contr�
 
 - **CA-12**: **Dados** bombas e chamas no tabuleiro, **quando** é desenhado, **então** bombas e chamas têm a marca de animação (classe CSS) correspondente. Com `prefers-reduced-motion: reduce`, as animações ficam desligadas (decisão 6; verificado por teste da folha de estilos ou, se o jsdom não permitir, na verificação manual do CA-14).
 
+### Reabertura (2026-10-01, depois do uso real)
+
+- **CA-15** (decisão 8): **Dada** uma bomba no tabuleiro, **quando** ela é animada, **então** só aumenta e diminui de tamanho, de leve (no máximo 4 %), sempre em torno do centro da casa: não sai do lugar nem balança. Com movimento reduzido, continua parada (CA-12).
+- **CA-16** (decisão 9): **Dado** o tabuleiro de assistir ou do editor, **quando** é desenhado, **então** há uma linha clara e fina entre todas as casas vizinhas, por cima do piso e dos blocos e por baixo de bombas, chamas e jogadores, e essa linha não recebe cliques.
+- **CA-17** (EST-04, BOM-02, DEC-09; decisão 10): **Dado** um jogador vivo no tabuleiro de assistir, **quando** o mouse passa sobre ele, **então** aparece um cartão com:
+  - o id do jogador (ex.: `jogador_1`);
+  - a versão do bot (`bot_versao`);
+  - as bombas que ainda pode plantar neste turno, `bombas_por_turno` − usadas;
+  - as bombas usadas no turno no formato "usou u de n (u/n)", em que u conta as ações `PLANTAR` com resultado `EXECUTADA` nos relatórios das etapas 1…k já exibidas e n é `bombas_por_turno`.
+
+  No planejamento (etapa 0), u é 0. O cartão some quando o mouse sai do jogador, e os números acompanham a etapa exibida enquanto ele está aberto.
+
 ### Verificação
 
 - **CA-13**: Em `frontend/`, `npm run check` sem erros e `npm test` passando, incluindo todos os testes dos marcos 6 e 7.
@@ -91,3 +103,6 @@ Vitest + Testing Library com jsdom, como nos marcos 6 e 7, salvo menção contr�
 5. **Casa fechada.** Decisão: continua com o sprite de bloco fixo, como diz o CA-17 do marco 6. Um sprite próprio (ex.: parede de metal) seria bonito, mas mudaria esse critério; pode entrar depois com uma reabertura pequena.
 6. **Movimento reduzido.** Decisão: respeitar `prefers-reduced-motion`: sem pulsar e sem tremular, mas com o deslize do jogador (que ajuda a seguir a partida) encurtado para um corte seco.
 7. **Piso.** Decisão: o fundo do tabuleiro passa a ser o sprite `piso` repetido em cada casa (grama, como no Bomberman clássico), no lugar do retângulo verde liso. No editor, cada casa clicável usa esse piso.
+8. **Pulso da bomba (reabertura).** O pulso de 9 % ficou exagerado e, como a origem da escala era a caixa do desenho (e não a casa), a bomba parecia sair do lugar. Decisão: escala de no máximo 4 %, com a origem no centro da casa, num ritmo mais lento (cerca de 1,2 s por ciclo).
+9. **Linhas entre as casas (reabertura).** Decisão: uma grade de linhas claras e finas (branco com pouca opacidade) desenhada uma vez sobre todo o tabuleiro, nas duas telas. No editor, ela substitui o contorno escuro das casas clicáveis, para as duas telas ficarem iguais.
+10. **Cartão do jogador (reabertura).** O `<title>` nativo do SVG demora a aparecer e não dá para formatar. Decisão: um cartão HTML próprio, posicionado junto do jogador, que aparece ao passar o mouse e também ao focar o jogador pelo teclado. "Bombas que ainda tem" segue o EST-04: o estoque é por turno e se renova no início de cada turno; bombas de turnos anteriores ainda no tabuleiro não contam. O `<title>` atual continua (ele carrega o `BLOQUEADA` do CA-07). No editor não há cartão: lá ainda não existem jogadores, só posições iniciais.

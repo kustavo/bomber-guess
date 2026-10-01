@@ -35,4 +35,15 @@ describe('sprites.css', () => {
   test('CA-14 sprites nítidos: crispEdges nos símbolos (D10)', () => {
     expect(regra(css, 'symbol {')).toMatch(/shape-rendering:\s*crispEdges/);
   });
+
+  test('CA-15 pulso da bomba sutil e em torno da casa (decisão 8)', () => {
+    const bomba = regra(css, '.animada-bomba {')!;
+    expect(bomba).toMatch(/transform-box:\s*view-box/);
+    const quadros = css.slice(css.indexOf('@keyframes pulso-bomba'));
+    const escalas = [...quadros.slice(0, quadros.indexOf('@keyframes', 1) > 0 ? quadros.indexOf('@keyframes', 1) : undefined).matchAll(/scale\(([\d.]+)\)/g)].map((m) => Number(m[1]));
+    expect(escalas.length).toBeGreaterThan(0);
+    expect(Math.max(...escalas)).toBeLessThanOrEqual(1.04);
+    expect(Math.min(...escalas)).toBeGreaterThanOrEqual(1);
+    expect(css).not.toMatch(/translate|rotate/);
+  });
 });

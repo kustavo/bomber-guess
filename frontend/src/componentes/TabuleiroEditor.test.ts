@@ -49,6 +49,22 @@ describe('TabuleiroEditor com sprites (marco 14)', () => {
   });
 });
 
+describe('grade do editor (marco 14)', () => {
+  test('CA-16 grade clara depois dos blocos e antes das posições e das casas clicáveis', () => {
+    const m = mapa(['bloco-fixo', p(1, 1)], ['posicao-inicial', p(0, 0)]);
+    const { container, unmount } = render(TabuleiroEditor, { mapa: m, onCasa: () => {} });
+    const grade = container.querySelector('[data-grade]')!;
+    expect(grade.getAttribute('d')).toBe('M1 0V3M2 0V3M3 0V3M0 1H4M0 2H4');
+    expect(grade.getAttribute('pointer-events')).toBe('none');
+    const filhos = [...container.querySelector('svg')!.children];
+    const pos = (sel: string) => filhos.findIndex((f) => f.matches(sel));
+    expect(pos('[data-grade]')).toBeGreaterThan(pos('[data-tipo="bloco-fixo"]'));
+    expect(pos('[data-grade]')).toBeLessThan(pos('[data-tipo="posicao-inicial"]'));
+    expect(pos('[data-grade]')).toBeLessThan(pos('[data-casa]'));
+    unmount();
+  });
+});
+
 describe('foco das casas (marco 7, reabertura)', () => {
   // O jsdom não desenha o anel de foco; o teste lê o <style> do componente (D16).
   const fonte = readFileSync(resolve(process.cwd(), 'src/componentes/TabuleiroEditor.svelte'), 'utf8');

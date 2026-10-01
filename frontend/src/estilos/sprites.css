@@ -11,10 +11,11 @@ symbol {
   transition: transform var(--transicao, 0ms) ease-out;
 }
 
+/* A origem da escala vem do componente (centro da casa); view-box faz ela
+   valer em unidades do tabuleiro (spec 14, CA-15; plano, D11). */
 .animada-bomba {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: pulso-bomba 0.8s ease-in-out infinite;
+  transform-box: view-box;
+  animation: pulso-bomba 1.2s ease-in-out infinite;
 }
 
 .animada-chama {
@@ -27,7 +28,7 @@ symbol {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.09);
+    transform: scale(1.04);
   }
 }
 

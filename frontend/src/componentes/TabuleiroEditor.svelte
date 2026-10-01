@@ -5,6 +5,7 @@
   import { itemEm, type Item, type MapaEmEdicao } from '../lib/editor';
   import { corJogador } from '../lib/textos';
   import type { Posicao } from '../lib/tipos';
+  import Grade from './Grade.svelte';
   import Sprite from './Sprite.svelte';
 
   interface Props {
@@ -58,6 +59,7 @@
       <Sprite nome="bloco-destrutivel" x={b.x} y={b.y} />
     </g>
   {/each}
+  <Grade largura={mapa.config.largura} altura={mapa.config.altura} />
   {#each mapa.posicoes_iniciais as pi, i (`${pi.posicao.x},${pi.posicao.y}`)}
     <g data-tipo="posicao-inicial" data-x={pi.posicao.x} data-y={pi.posicao.y} data-numero={i + 1}>
       <Sprite nome="jogador" x={pi.posicao.x} y={pi.posicao.y} cor={corJogador(i)} />
@@ -92,8 +94,6 @@
   }
   .casa {
     fill: transparent;
-    stroke: rgb(0 0 0 / 0.12);
-    stroke-width: 0.03;
     cursor: pointer;
     /* O anel de foco do navegador é medido em unidades do SVG e, ampliado com o
        tabuleiro, vira um círculo enorme (spec 07, CA-21; plano, D16). */

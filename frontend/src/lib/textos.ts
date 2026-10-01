@@ -42,3 +42,6 @@ export function formatarTempo(ms: number): string {
 // Cor de cada jogador pela ordem em estado.jogadores (plano, D8).
 const cores = ['#e5484d', '#3e8ef7', '#30a46c', '#f5a524'];
 export const corJogador = (indice: number) => cores[indice % cores.length];
+
+// textoBombasUsadas: bombas plantadas no turno sobre o limite (spec 14, CA-17).
+export const textoBombasUsadas = (usadas: number, total: number) => `usou ${usadas} de ${total} (${usadas}/${total})`;

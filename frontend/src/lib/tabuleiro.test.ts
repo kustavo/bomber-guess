@@ -199,4 +199,27 @@ describe('calcularTabuleiro', () => {
     t.explosoes[0].chamas.push(p(9, 9));
     expect(e1.chamas).toHaveLength(2); // cópia
   });
+
+  test.each([
+    { nome: 'EST-04 CA-17 planejamento: nenhuma bomba usada', ate: 0, usadas: [0, 0] },
+    { nome: 'BOM-02 CA-17 plantar executado na etapa 1 conta', ate: 1, usadas: [1, 0] },
+    { nome: 'DEC-09 CA-17 plantar descartado ou ignorado não conta', ate: 2, usadas: [1, 0] },
+    { nome: 'BOM-02 CA-17 conta até a etapa exibida', ate: 3, usadas: [2, 1] },
+  ])('$nome', ({ ate, usadas }) => {
+    const plantar = (etapa: number, resultado: 'EXECUTADA' | 'DESCARTADA' | 'IGNORADA') =>
+      ({ acao: { etapa, tipo: 'PLANTAR' as const }, resultado });
+    const rs = [
+      relatorio(1, { jogadores: [jogadorEtapa('jogador_1', p(0, 0), plantar(1, 'EXECUTADA')), jogadorEtapa('jogador_2', p(4, 4))] }),
+      relatorio(2, {
+        jogadores: [jogadorEtapa('jogador_1', p(0, 0), plantar(2, 'DESCARTADA')), jogadorEtapa('jogador_2', p(4, 4), plantar(2, 'IGNORADA'))],
+      }),
+      relatorio(3, {
+        jogadores: [jogadorEtapa('jogador_1', p(0, 0), plantar(3, 'EXECUTADA')), jogadorEtapa('jogador_2', p(4, 4), plantar(3, 'EXECUTADA'))],
+      }),
+    ];
+    const e = estado({ jogadores: [jogador('jogador_1', p(0, 0), { bombas_por_turno: 2 }), jogador('jogador_2', p(4, 4), { bombas_por_turno: 3 })] });
+    const t = calcularTabuleiro(e, rs, ate);
+    expect(t.jogadores.map((j) => j.bombas_usadas)).toEqual(usadas);
+    expect(t.jogadores.map((j) => j.bombas_por_turno)).toEqual([2, 3]);
+  });
 });

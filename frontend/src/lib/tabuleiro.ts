@@ -12,6 +12,8 @@ export interface JogadorExibido {
   acao?: Acao; // ausente no início do turno
   resultado?: ResultadoAcao;
   bloqueado: boolean;
+  bombas_por_turno: number; // EST-04
+  bombas_usadas: number; // PLANTAR executados nas etapas exibidas (spec 14, CA-17; plano 14, D13)
 }
 
 export interface TabuleiroExibido {
@@ -58,6 +60,10 @@ export function calcularTabuleiro(estado: Estado, etapas: RelatorioEtapa[], ate:
       acao: naEtapa ? { ...naEtapa.acao } : undefined,
       resultado: naEtapa?.resultado,
       bloqueado: bloqueados.has(j.id),
+      bombas_por_turno: j.bombas_por_turno,
+      bombas_usadas: liberadas.filter((r) =>
+        r.jogadores.some((je) => je.id === j.id && je.acao.tipo === 'PLANTAR' && je.resultado === 'EXECUTADA'),
+      ).length,
     };
   });
 

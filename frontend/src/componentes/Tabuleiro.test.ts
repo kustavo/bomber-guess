@@ -1,4 +1,4 @@
-import { render } from '@testing-library/svelte';
+import { fireEvent, render } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import Tabuleiro from './Tabuleiro.svelte';
 import PainelJogadores from './PainelJogadores.svelte';
@@ -169,5 +169,82 @@ describe('Tabuleiro com sprites (marco 14)', () => {
     const j = container.querySelector('[data-tipo="jogador"]') as SVGElement;
     expect(j.classList.contains('deslize')).toBe(true);
     expect(j.style.getPropertyValue('--transicao')).toBe('200ms');
+  });
+
+  test('CA-15 a bomba pulsa em torno do centro da sua casa', () => {
+    const e = estado({ bombas: [{ posicao: p(3, 1), jogador_id: 'jogador_1', potencia: 2, pavio_restante: 2 }] });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [], 0) });
+    const use = container.querySelector('[data-tipo="bomba"] use') as SVGElement;
+    expect(use.style.transformOrigin).toBe('3.5px 1.5px');
+  });
+
+  test('CA-16 grade clara entre as casas, entre os blocos e o resto, sem receber cliques', () => {
+    const e = estado({ bombas: [{ posicao: p(1, 0), jogador_id: 'jogador_1', potencia: 2, pavio_restante: 2 }] });
+    const r = relatorio(1, { chamas: [p(3, 3)], bombas: e.bombas });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [r], 1) });
+    const grade = container.querySelector('[data-grade]')!;
+    expect(grade.getAttribute('d')).toBe('M1 0V5M2 0V5M3 0V5M4 0V5M0 1H5M0 2H5M0 3H5M0 4H5');
+    expect(grade.getAttribute('pointer-events')).toBe('none');
+    const filhos = [...container.querySelector('svg')!.children];
+    const pos = (sel: string) => filhos.findIndex((f) => f.matches(sel));
+    const ultimo = (sel: string) => Math.max(...filhos.map((f, i) => (f.matches(sel) ? i : -1)));
+    expect(pos('[data-grade]')).toBeGreaterThan(ultimo('[data-tipo^="bloco"]'));
+    for (const t of ['chama', 'bomba', 'jogador']) expect(pos(`[data-tipo="${t}"]`)).toBeGreaterThan(pos('[data-grade]'));
+  });
+});
+
+describe('cartão do jogador (marco 14, reabertura)', () => {
+  const plantou = (etapa: number) =>
+    relatorio(etapa, {
+      jogadores: [
+        jogadorEtapa('jogador_1', p(0, 0), { acao: { etapa, tipo: 'PLANTAR' }, resultado: 'EXECUTADA' }),
+        jogadorEtapa('jogador_2', p(4, 4)),
+      ],
+    });
+  const e = estado({ jogadores: [jogador('jogador_1', p(0, 0), { bombas_por_turno: 2 }), jogador('jogador_2', p(4, 4), { bot_versao: 'aleatorio-v2' })] });
+  const campos = (c: HTMLElement) =>
+    Object.fromEntries([...c.querySelectorAll('[data-cartao] [data-campo]')].map((el) => [el.getAttribute('data-campo'), el.textContent]));
+
+  test('EST-04 BOM-02 CA-17 mouse sobre o jogador mostra nome, IA e bombas; sair esconde', async () => {
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [plantou(1)], 1) });
+    expect(container.querySelector('[data-cartao]')).toBeNull();
+    const j1 = container.querySelector('[data-jogador="jogador_1"]')!;
+    await fireEvent.mouseEnter(j1);
+    expect(campos(container)).toEqual({
+      nome: 'jogador_1',
+      bot: 'aleatorio-v1',
+      restantes: 'Bombas restantes: 1',
+      usadas: 'usou 1 de 2 (1/2)',
+    });
+    await fireEvent.mouseLeave(j1);
+    expect(container.querySelector('[data-cartao]')).toBeNull();
+  });
+
+  test('CA-17 o cartão também abre com o foco do teclado', async () => {
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [], 0) });
+    const j2 = container.querySelector('[data-jogador="jogador_2"]') as SVGElement;
+    expect(j2.getAttribute('tabindex')).toBe('0');
+    await fireEvent.focus(j2);
+    expect(campos(container)).toMatchObject({ nome: 'jogador_2', bot: 'aleatorio-v2', usadas: 'usou 0 de 1 (0/1)' });
+    await fireEvent.blur(j2);
+    expect(container.querySelector('[data-cartao]')).toBeNull();
+  });
+
+  test('CA-17 com o cartão aberto, os números acompanham a etapa exibida', async () => {
+    const rs = [plantou(1), plantou(2)];
+    const { container, rerender } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, rs, 1) });
+    await fireEvent.mouseEnter(container.querySelector('[data-jogador="jogador_1"]')!);
+    expect(campos(container).usadas).toBe('usou 1 de 2 (1/2)');
+    await rerender({ tabuleiro: calcularTabuleiro(e, rs, 2) });
+    expect(campos(container)).toMatchObject({ restantes: 'Bombas restantes: 0', usadas: 'usou 2 de 2 (2/2)' });
+  });
+
+  test('FIM-01 CA-17 jogador que morre com o cartão aberto: o cartão some', async () => {
+    const morte = relatorio(1, { mortes: ['jogador_1'], jogadores: [jogadorEtapa('jogador_1', p(0, 0), { status: 'MORTO' }), jogadorEtapa('jogador_2', p(4, 4))] });
+    const { container, rerender } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [morte], 0) });
+    await fireEvent.mouseEnter(container.querySelector('[data-jogador="jogador_1"]')!);
+    expect(container.querySelector('[data-cartao]')).not.toBeNull();
+    await rerender({ tabuleiro: calcularTabuleiro(e, [morte], 1) });
+    expect(container.querySelector('[data-cartao]')).toBeNull();
   });
 });
