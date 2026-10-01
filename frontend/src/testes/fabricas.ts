@@ -1,13 +1,18 @@
 // Construtores de dados para os testes (plano, D10). Valores pequenos e legíveis;
 // cada teste sobrescreve só o que importa.
+import type { ClienteApi } from '../lib/api';
 import type {
   Desfecho,
   Estado,
   Jogador,
   JogadorEtapa,
+  Mapa,
+  PedidoPartida,
   Posicao,
   RelatorioEtapa,
+  RespostaBots,
   RespostaEstado,
+  RespostaMapa,
   RespostaPartidas,
 } from '../lib/tipos';
 
@@ -140,13 +145,20 @@ export const descarregar = () => new Promise<void>((r) => setTimeout(r, 0));
 
 // clienteFalso: API falsa. `responder` recebe o número da chamada (1, 2, ...) e devolve
 // a resposta, lança um erro, ou devolve uma promessa (para consultas que demoram).
+// `criacao` substitui as respostas de GET /bots, POST /mapas e POST /partidas (marco 7);
+// os corpos enviados ficam em `mapas` e `pedidos`.
 export function clienteFalso(
-  responder: (n: number) => RespostaEstado | Promise<RespostaEstado>,
+  responder: (n: number) => RespostaEstado | Promise<RespostaEstado> = () => resposta(),
   partidas: () => RespostaPartidas | Promise<RespostaPartidas> = () => respostaPartidas(),
+  criacao: Partial<Pick<ClienteApi, 'buscarBots' | 'salvarMapa' | 'criarPartida'>> = {},
 ) {
   const chamadas: string[] = [];
+  const mapas: Mapa[] = [];
+  const pedidos: PedidoPartida[] = [];
   return {
     chamadas,
+    mapas,
+    pedidos,
     buscarEstado: async (nome: string) => {
       chamadas.push(`estado ${nome}`);
       return responder(chamadas.length);
@@ -155,5 +167,26 @@ export function clienteFalso(
       chamadas.push('partidas');
       return partidas();
     },
+    buscarBots: async (): Promise<RespostaBots> => {
+      chamadas.push('bots');
+      return criacao.buscarBots ? criacao.buscarBots() : respostaBots();
+    },
+    salvarMapa: async (mapa: Mapa): Promise<RespostaMapa> => {
+      chamadas.push(`salvar mapa ${mapa.nome}`);
+      mapas.push(mapa);
+      return criacao.salvarMapa
+        ? criacao.salvarMapa(mapa)
+        : { nome: mapa.nome, horario_servidor: '2026-10-01T12:00:00.000Z' };
+    },
+    criarPartida: async (pedido: PedidoPartida): Promise<RespostaEstado> => {
+      chamadas.push(`criar partida ${pedido.nome}`);
+      pedidos.push(pedido);
+      return criacao.criarPartida ? criacao.criarPartida(pedido) : resposta({ nome: pedido.nome });
+    },
   };
+}
+
+// respostaBots: catálogo com duas versões, em ordem alfabética (spec 05, CA-17).
+export function respostaBots(bots = ['aleatorio-v1', 'aleatorio-v2']): RespostaBots {
+  return { bots, horario_servidor: '2026-10-01T12:00:00.000Z' };
 }

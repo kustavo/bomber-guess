@@ -1,9 +1,10 @@
 <script lang="ts">
-  // Escolhe a tela pela rota em hash (spec 06, decisão 1; CA-13).
+  // Escolhe a tela pela rota em hash (spec 06, decisão 1; CA-13; spec 07, CA-17).
   import { relogioReal, type Relogio } from './lib/acompanhamento';
   import { criarCliente, type ClienteApi } from './lib/api';
   import { lerRota } from './lib/rota';
   import ListaPartidas from './telas/ListaPartidas.svelte';
+  import TelaCriar from './telas/TelaCriar.svelte';
   import TelaPartida from './telas/TelaPartida.svelte';
 
   interface Props {
@@ -28,6 +29,8 @@
     {#key rota.nome}
       <TelaPartida nome={rota.nome} {cliente} {relogio} />
     {/key}
+  {:else if rota.tela === 'criar'}
+    <TelaCriar {cliente} />
   {:else}
     <ListaPartidas {cliente} {relogio} />
   {/if}

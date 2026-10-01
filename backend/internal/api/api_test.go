@@ -1,12 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -61,6 +63,7 @@ type servidor struct {
 	*httptest.Server
 	relogio *relogioDeTeste
 	planos  fila.Consumidor
+	dir     string // diretório de mapas
 }
 
 func novoServidor(t *testing.T) *servidor {
@@ -79,7 +82,7 @@ func novoServidor(t *testing.T) *servidor {
 		Fila:     f,
 		Relogio:  relogio,
 	})
-	s := &servidor{Server: httptest.NewServer(Novo(g)), relogio: relogio, planos: planos}
+	s := &servidor{Server: httptest.NewServer(Novo(g)), relogio: relogio, planos: planos, dir: dir}
 	t.Cleanup(func() { s.Close(); g.Encerrar() })
 	return s
 }
@@ -298,7 +301,7 @@ func TestEndpointsDeOutrosMarcosEMetodos(t *testing.T) {
 		nome, metodo, caminho string
 		status                int
 	}{
-		{"API-03 CA-24 POST /mapas", "POST", "/mapas", 501},
+		{"API-03 CA-06 método errado em /mapas", "GET", "/mapas", 405},
 		{"API-06 CA-24 POST plano", "POST", "/partidas/final-1/turnos/1/plano", 501},
 		{"API-08 CA-24 GET /ranking", "GET", "/ranking", 501},
 		{"API-09 CA-24 método errado em /bots", "POST", "/bots", 405},
@@ -311,6 +314,93 @@ func TestEndpointsDeOutrosMarcosEMetodos(t *testing.T) {
 			status, corpo := s.pedir(t, c.metodo, c.caminho, "")
 			if erro, _ := corpo["erro"].(string); status != c.status || erro == "" {
 				t.Errorf("%d %v, esperado %d", status, corpo, c.status)
+			}
+		})
+	}
+}
+
+// mapaNovo é o mapaEmL com outro nome, mudado por mudar.
+func mapaNovo(t *testing.T, nome string, mudar func(m map[string]any)) string {
+	t.Helper()
+	var m map[string]any
+	if err := json.Unmarshal([]byte(mapaEmL), &m); err != nil {
+		t.Fatal(err)
+	}
+	m["nome"] = nome
+	if mudar != nil {
+		mudar(m)
+	}
+	dados, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(dados)
+}
+
+func TestSalvarMapa(t *testing.T) {
+	s := novoServidor(t)
+	corpo := mapaNovo(t, "novo-1", nil)
+	status, resposta := s.pedir(t, "POST", "/mapas", corpo)
+	if status != http.StatusCreated || resposta["nome"] != "novo-1" || resposta["horario_servidor"] != horarioDe(t0) {
+		t.Fatalf("API-03 API-02 CA-01 %d %v", status, resposta)
+	}
+	dados, err := os.ReadFile(filepath.Join(s.dir, "novo-1.json"))
+	if err != nil {
+		t.Fatalf("API-03 CA-01 arquivo: %v", err)
+	}
+	gravado, err := jogo.LerMapa(dados)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enviado, _ := jogo.LerMapa([]byte(corpo))
+	if !reflect.DeepEqual(gravado, enviado) {
+		t.Errorf("MAP-01 MAP-02 CA-01 gravado %+v, enviado %+v", gravado, enviado)
+	}
+	status, resposta = s.pedir(t, "POST", "/partidas", `{"nome": "final-2", "mapa": "novo-1", "bots": ["bombista", "espera"]}`)
+	if status != http.StatusCreated {
+		t.Errorf("API-04 CA-02 %d %v", status, resposta)
+	}
+}
+
+func TestSalvarMapaInvalido(t *testing.T) {
+	casos := []struct {
+		nome   string
+		corpo  string
+		status int
+	}{
+		{"API-03 CA-04 JSON malformado", `{"nome": `, 400},
+		{"API-03 CA-04 pedido de partida não é mapa", `{"nome": "x", "mapa": "eml", "bots": ["espera"]}`, 400},
+		{"API-03 CA-04 campo desconhecido", mapaNovo(t, "x", func(m map[string]any) { m["bots"] = []string{"espera"} }), 400},
+		{"API-03 CA-04 nome vazio", mapaNovo(t, "", nil), 400},
+		{"API-03 CA-04 nome com ..", mapaNovo(t, "../x", nil), 400},
+		{"API-03 CA-04 nome com barra", mapaNovo(t, "a/b", nil), 400},
+		{"API-03 CA-04 nome com maiúscula e espaço", mapaNovo(t, "A B", nil), 400},
+		{"MAP-05 CA-03 largura 0", mapaNovo(t, "x", func(m map[string]any) { m["config"].(map[string]any)["largura"] = 0 }), 400},
+		{"MAP-05 CA-03 uma posição inicial", mapaNovo(t, "x", func(m map[string]any) {
+			m["posicoes_iniciais"] = []map[string]int{{"x": 0, "y": 0}}
+		}), 400},
+		{"MAP-05 CA-03 acoes_por_turno 0", mapaNovo(t, "x", func(m map[string]any) {
+			m["jogador_padrao"].(map[string]any)["acoes_por_turno"] = 0
+		}), 400},
+		{"API-03 CA-05 nome já existente", mapaNovo(t, "eml", func(m map[string]any) { m["blocos_destrutiveis"] = []any{} }), 409},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			s := novoServidor(t)
+			original, _ := os.ReadFile(filepath.Join(s.dir, "eml.json"))
+			status, corpo := s.pedir(t, "POST", "/mapas", c.corpo)
+			if erro, _ := corpo["erro"].(string); status != c.status || erro == "" || corpo["horario_servidor"] == nil {
+				t.Errorf("%d %v, esperado %d com erro", status, corpo, c.status)
+			}
+			entradas, _ := os.ReadDir(s.dir)
+			if len(entradas) != 1 {
+				t.Errorf("arquivos no diretório: %v", entradas)
+			}
+			if atual, _ := os.ReadFile(filepath.Join(s.dir, "eml.json")); !bytes.Equal(atual, original) {
+				t.Error("eml.json mudou")
+			}
+			if _, err := os.Stat(filepath.Join(filepath.Dir(s.dir), "x.json")); err == nil {
+				t.Error("arquivo gravado fora do diretório de mapas")
 			}
 		})
 	}

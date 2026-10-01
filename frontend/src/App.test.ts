@@ -76,4 +76,29 @@ describe('App', () => {
     expect(container.textContent).toContain('Nenhuma partida');
     unmount();
   });
+
+  test('API-04 CA-17 o link "Criar partida" da lista abre o editor', async () => {
+    const { relogio, cliente } = iniciar();
+    const { container, unmount } = render(App, { cliente, relogio });
+    await relogio.avancar(0);
+    const link = container.querySelector<HTMLAnchorElement>('[data-acao="criar-partida"]');
+    expect(link?.getAttribute('href')).toBe('#/criar');
+    window.location.hash = link!.getAttribute('href')!;
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await descarregar();
+    expect(container.querySelector('h1')?.textContent).toBe('Criar partida');
+    expect(container.querySelector('[data-casa]')).not.toBeNull();
+    unmount();
+  });
+
+  test('API-04 CA-17 #/criar aberto diretamente mostra o editor vazio', async () => {
+    window.location.hash = '#/criar';
+    const { relogio, cliente } = iniciar();
+    const { container, unmount } = render(App, { cliente, relogio });
+    await descarregar();
+    expect(container.querySelector('h1')?.textContent).toBe('Criar partida');
+    expect(container.querySelector('[data-tipo]')).toBeNull();
+    expect(cliente.chamadas).toEqual(['bots']);
+    unmount();
+  });
 });

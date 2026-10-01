@@ -11,10 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kustavo/bomber-guess/backend/internal/jogo"
 	"github.com/kustavo/bomber-guess/backend/internal/partida"
 )
 
-// tamanhoMaximoDoCorpo limita o corpo de POST /partidas.
+// tamanhoMaximoDoCorpo limita o corpo de POST /partidas e de POST /mapas.
 const tamanhoMaximoDoCorpo = 1 << 20
 
 type api struct {
@@ -30,7 +31,7 @@ func Novo(g *partida.Gerenciador) http.Handler {
 	mux.HandleFunc("/partidas", a.metodos(map[string]http.HandlerFunc{"GET": a.listar, "POST": a.criar}))
 	mux.HandleFunc("/partidas/{nome}/estado", a.metodos(map[string]http.HandlerFunc{"GET": a.estado}))
 	mux.HandleFunc("/partidas/{nome}/historico", a.metodos(map[string]http.HandlerFunc{"GET": a.historico}))
-	mux.HandleFunc("/mapas", a.metodos(map[string]http.HandlerFunc{"POST": a.depois("POST /mapas", "marco 7")}))
+	mux.HandleFunc("/mapas", a.metodos(map[string]http.HandlerFunc{"POST": a.salvarMapa}))
 	mux.HandleFunc("/partidas/{nome}/turnos/{n}/plano", a.metodos(map[string]http.HandlerFunc{"POST": a.depois("POST /partidas/{nome}/turnos/{n}/plano", "versão 2")}))
 	mux.HandleFunc("/ranking", a.metodos(map[string]http.HandlerFunc{"GET": a.depois("GET /ranking", "marco 9")}))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +97,29 @@ func (a *api) criar(w http.ResponseWriter, r *http.Request) {
 	default:
 		agora := a.agora()
 		responder(w, http.StatusCreated, novaRespostaEstado(p.Visao(agora), agora))
+	}
+}
+
+// salvarMapa grava o mapa do editor (API-03). D4: campos desconhecidos
+// recusam o corpo, que assim não passa por outro formato.
+func (a *api) salvarMapa(w http.ResponseWriter, r *http.Request) {
+	var m jogo.Mapa
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, tamanhoMaximoDoCorpo))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&m); err != nil {
+		a.erro(w, http.StatusBadRequest, "corpo inválido: "+err.Error())
+		return
+	}
+	err := a.g.SalvarMapa(m)
+	switch {
+	case errors.Is(err, partida.ErrPedidoInvalido):
+		a.erro(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, partida.ErrNomeRepetido):
+		a.erro(w, http.StatusConflict, err.Error())
+	case err != nil:
+		a.erro(w, http.StatusInternalServerError, err.Error())
+	default:
+		responder(w, http.StatusCreated, respostaMapa{Nome: m.Nome, HorarioServidor: horario(a.agora())})
 	}
 }
 

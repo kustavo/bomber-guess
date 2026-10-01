@@ -127,3 +127,41 @@ export interface RespostaPartidas {
   partidas: ResumoPartida[];
   horario_servidor: string;
 }
+
+// Atributos é o jogador_padrao do mapa (MAP-02).
+export interface Atributos {
+  bombas_por_turno: number;
+  potencia: number;
+  pavio_padrao: number;
+  acoes_por_turno: number;
+}
+
+// Mapa é o formato de docs/EDITOR.md, corpo de POST /mapas (API-03).
+export interface Mapa {
+  nome: string;
+  config: Config; // MAP-01
+  jogador_padrao: Atributos; // MAP-02
+  blocos_fixos: Posicao[];
+  blocos_destrutiveis: Posicao[];
+  posicoes_iniciais: Posicao[]; // MAP-03: a versão i joga na posição i
+}
+
+// RespostaBots é a resposta de GET /bots (API-09).
+export interface RespostaBots {
+  bots: string[];
+  horario_servidor: string;
+}
+
+// RespostaMapa é a resposta de POST /mapas (API-03).
+export interface RespostaMapa {
+  nome: string;
+  horario_servidor: string;
+}
+
+// PedidoPartida é o corpo de POST /partidas (API-04; spec 05, decisão 6).
+export interface PedidoPartida {
+  nome: string;
+  mapa: string;
+  bots: string[];
+  semente: number;
+}

@@ -30,6 +30,12 @@ type respostaErro struct {
 	HorarioServidor horario `json:"horario_servidor"`
 }
 
+// respostaMapa é a resposta de POST /mapas (API-03).
+type respostaMapa struct {
+	Nome            string  `json:"nome"`
+	HorarioServidor horario `json:"horario_servidor"`
+}
+
 type respostaBots struct {
 	Bots            []string `json:"bots"`
 	HorarioServidor horario  `json:"horario_servidor"`

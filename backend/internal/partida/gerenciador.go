@@ -2,8 +2,10 @@ package partida
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -123,6 +125,45 @@ func (g *Gerenciador) Criar(p Pedido) (*Partida, error) {
 		go g.rodar(partida)
 	}
 	return partida, nil
+}
+
+// SalvarMapa grava m em <DirMapas>/<m.Nome>.json (API-03). Os erros embrulham
+// ErrPedidoInvalido (nome fora de nomeValido, MAP-05 via jogo.VerificarMapa)
+// ou ErrNomeRepetido (o arquivo já existe; nada é sobrescrito).
+func (g *Gerenciador) SalvarMapa(m jogo.Mapa) error {
+	if !nomeValido.MatchString(m.Nome) {
+		return fmt.Errorf("%w: mapa %q deve ter de 1 a 64 caracteres entre a-z, 0-9 e -", ErrPedidoInvalido, m.Nome)
+	}
+	if err := jogo.VerificarMapa(m); err != nil {
+		return fmt.Errorf("%w: %v", ErrPedidoInvalido, err)
+	}
+	dados, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return err
+	}
+	// D2: grava num temporário e liga ao nome final; o Link falha se o
+	// arquivo já existe, e ninguém lê um mapa pela metade.
+	tmp, err := os.CreateTemp(g.cfg.DirMapas, "."+m.Nome+"-*.tmp")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	if err = tmp.Chmod(0o644); err == nil { // CreateTemp cria com 0600
+		_, err = tmp.Write(append(dados, '\n'))
+	}
+	if errFechar := tmp.Close(); err == nil {
+		err = errFechar
+	}
+	if err != nil {
+		return err
+	}
+	if err := os.Link(tmp.Name(), filepath.Join(g.cfg.DirMapas, m.Nome+".json")); err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return fmt.Errorf("%w: mapa %q", ErrNomeRepetido, m.Nome)
+		}
+		return err
+	}
+	return nil
 }
 
 // rodar é o laço em tempo real da partida (D1): avança até agora e espera o

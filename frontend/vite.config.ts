@@ -10,6 +10,7 @@ export default defineConfig({
     proxy: {
       '/partidas': api,
       '/bots': api,
+      '/mapas': api,
     },
   },
   resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,

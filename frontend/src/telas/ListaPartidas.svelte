@@ -3,7 +3,7 @@
   import { relogioReal, type Relogio } from '../lib/acompanhamento';
   import type { ClienteApi } from '../lib/api';
   import { CONSULTA_LISTA_MS } from '../lib/ritmo';
-  import { enderecoPartida } from '../lib/rota';
+  import { ENDERECO_CRIAR, enderecoPartida } from '../lib/rota';
   import { textoDesfecho, textoFase } from '../lib/textos';
   import type { ResumoPartida } from '../lib/tipos';
 
@@ -42,13 +42,14 @@
 
 <section class="lista">
   <h1>Partidas</h1>
+  <p><a href={ENDERECO_CRIAR} data-acao="criar-partida">Criar partida</a></p>
   {#if semConexao}
     <p class="aviso" role="status" data-aviso="sem-conexao">Sem conexão com o servidor. Tentando de novo…</p>
   {/if}
   {#if partidas === undefined}
     {#if !semConexao}<p>Carregando…</p>{/if}
   {:else if partidas.length === 0}
-    <p>Nenhuma partida. Crie uma com <code>POST /partidas</code>.</p>
+    <p>Nenhuma partida. Use “Criar partida” para começar uma.</p>
   {:else}
     <table>
       <thead>
