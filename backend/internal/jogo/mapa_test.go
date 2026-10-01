@@ -49,6 +49,8 @@ func TestMapaInvalido(t *testing.T) {
 		{"MAP-05 limite_turnos zero", func(m *Mapa) { m.Config.LimiteTurnos = 0 }, "limite_turnos"},
 		{"MAP-05 FEC-01 turno_fechamento negativo", func(m *Mapa) { m.Config.TurnoFechamento = -1 }, "turno_fechamento"},
 		{"MAP-05 FEC-01 turno_fechamento igual a limite_turnos", func(m *Mapa) { m.Config.TurnoFechamento = m.Config.LimiteTurnos }, "turno_fechamento"},
+		{"MAP-05 FEC-08 area_minima negativa", func(m *Mapa) { m.Config.AreaMinima = Area{Largura: -1, Altura: 5} }, "area_minima"},
+		{"MAP-05 FEC-08 area_minima maior que o tabuleiro", func(m *Mapa) { m.Config.AreaMinima = Area{Largura: 6, Altura: 5} }, "area_minima"},
 		{"MAP-05 bombas_por_turno zero", func(m *Mapa) { m.JogadorPadrao.BombasPorTurno = 0 }, "bombas_por_turno"},
 		{"MAP-05 potencia zero", func(m *Mapa) { m.JogadorPadrao.Potencia = 0 }, "potencia"},
 		{"MAP-05 pavio_padrao zero", func(m *Mapa) { m.JogadorPadrao.PavioPadrao = 0 }, "pavio_padrao"},

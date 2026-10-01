@@ -11,14 +11,19 @@ import (
 	"github.com/kustavo/bomber-guess/backend/internal/jogo"
 )
 
-// Versao é o identificador desta versão do bot.
-const Versao = "aleatorio-v1"
+// Versões do bot: o v2 é o v1 preparado para o fechamento do tabuleiro
+// (specs/13-aleatorio-v2).
+const (
+	Versao   = "aleatorio-v1"
+	VersaoV2 = "aleatorio-v2"
+)
 
 // Bot anda aleatoriamente, planta bombas de vez em quando e foge das
 // explosões que consegue prever. Não guarda estado entre chamadas: o plano
 // depende só da semente, do estado e do jogador.
 type Bot struct {
-	semente uint64
+	semente  uint64
+	antecipa bool // v2: prepara-se para o fechamento (D1 do marco 13)
 }
 
 var _ jogo.Bot = (*Bot)(nil)
@@ -28,8 +33,18 @@ func Novo(semente uint64) *Bot {
 	return &Bot{semente: semente}
 }
 
-// Versao devolve "aleatorio-v1".
-func (b *Bot) Versao() string { return Versao }
+// NovoV2 cria o aleatorio-v2 com a semente dada.
+func NovoV2(semente uint64) *Bot {
+	return &Bot{semente: semente, antecipa: true}
+}
+
+// Versao devolve "aleatorio-v1" ou "aleatorio-v2".
+func (b *Bot) Versao() string {
+	if b.antecipa {
+		return VersaoV2
+	}
+	return Versao
+}
 
 // Planejar devolve exatamente acoes_por_turno ações numeradas 1, 2, 3…,
 // ou nenhuma se o jogador não existe ou está morto. Não altera o estado.
@@ -40,6 +55,9 @@ func (b *Bot) Planejar(estado jogo.Estado, jogadorID string) []jogo.Acao {
 	}
 	rng := b.gerador(estado.Turno, jogadorID)
 	etapas := jogo.CalcularEtapas(estado.Jogadores)
+	if b.antecipa && naJanela(estado.Config, estado.Turno) { // D2 do marco 13
+		return numerar(planejarNaJanela(rng, estado, eu, etapas)[:eu.AcoesPorTurno])
+	}
 	if eu.BombasPorTurno >= 1 && rng.IntN(2) == 0 { // decisão 5, D8
 		if passos, ok := tentarPlantar(rng, estado, eu, etapas); ok {
 			return numerar(passos[:eu.AcoesPorTurno])

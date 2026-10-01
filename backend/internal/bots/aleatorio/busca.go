@@ -6,12 +6,13 @@ import (
 	"github.com/kustavo/bomber-guess/backend/internal/jogo"
 )
 
-// modoBusca é o objetivo da busca ao fim do turno.
-type modoBusca int
+// objetivo diz se a casa final atende ao que a busca procura; a busca só
+// chega à casa final com o jogador vivo (D3 do marco 13).
+type objetivo func(l linha, casa jogo.Posicao) bool
 
-const (
-	buscaSegura       modoBusca = iota // vivo e fora da zona de perigo final
-	buscaSobrevivente                  // só vivo
+var (
+	buscaSegura       objetivo = func(l linha, casa jogo.Posicao) bool { return !l.perigo[casa] } // vivo e fora da zona de perigo final
+	buscaSobrevivente objetivo = func(linha, jogo.Posicao) bool { return true }                   // só vivo
 )
 
 // passosPossiveis são os passos de uma etapa: ficar parado ou mover.
@@ -44,12 +45,12 @@ type busca struct {
 	l          linha
 	acoes      int // depois desta etapa o jogador só fica parado (D6)
 	etapas     int
-	modo       modoBusca
+	objetivo   objetivo
 	falhas     map[no]caminho
 }
 
 // novaBusca prepara a busca para o estado e a linha do tempo dados.
-func novaBusca(rng *rand.Rand, estado jogo.Estado, l linha, acoes, etapas int, modo modoBusca) *busca {
+func novaBusca(rng *rand.Rand, estado jogo.Estado, l linha, acoes, etapas int, obj objetivo) *busca {
 	b := &busca{
 		rng:        rng,
 		config:     estado.Config,
@@ -57,7 +58,7 @@ func novaBusca(rng *rand.Rand, estado jogo.Estado, l linha, acoes, etapas int, m
 		l:          l,
 		acoes:      acoes,
 		etapas:     etapas,
-		modo:       modo,
+		objetivo:   obj,
 		falhas:     map[no]caminho{},
 	}
 	for _, p := range estado.BlocosFixos {
@@ -80,12 +81,12 @@ func (b *busca) destino(casa jogo.Posicao, p jogo.Acao) (jogo.Posicao, bool) {
 }
 
 // ir procura passos da etapa dada até a última, partindo da casa. Com ok, os
-// passos atingem o objetivo do modo; sem ok, são os que sobrevivem mais
+// passos atingem o objetivo; sem ok, são os que sobrevivem mais
 // etapas (vivas). Os passos podem ser menos que as etapas restantes quando
 // o jogador morre; o resto é completado com ESPERAR por quem chama.
 func (b *busca) ir(casa jogo.Posicao, etapa int) (passos []jogo.Acao, vivas int, ok bool) {
 	if etapa > b.etapas {
-		return nil, 0, b.modo == buscaSobrevivente || !b.l.perigo[casa]
+		return nil, 0, b.objetivo(b.l, casa)
 	}
 	n := no{casa, etapa}
 	if c, visto := b.falhas[n]; visto {

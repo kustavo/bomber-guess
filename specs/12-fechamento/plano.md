@@ -29,8 +29,11 @@ O fechamento é um passo a mais no fim de `ResolverTurno`, depois do laço de et
 ```go
 type Config struct {
 	// ...
-	TurnoFechamento int `json:"turno_fechamento,omitempty"` // EST-09, FEC-01: 0 desliga
+	TurnoFechamento int  `json:"turno_fechamento,omitempty"` // EST-09, FEC-01: 0 desliga
+	AreaMinima      Area `json:"area_minima,omitzero"`       // EST-10, FEC-08 (adendo): zero vale 5×5
 }
+
+type Area struct{ Largura, Altura int } // adendo
 
 type RelatorioEtapa struct {
 	// ...
@@ -38,7 +41,9 @@ type RelatorioEtapa struct {
 }
 
 func (c Config) Anel(p Posicao) int        // FEC-02
-func CasasQueFecham(estado Estado) []Posicao // FEC-01, FEC-03: ordenadas por y e x, sem as que já são fixas
+func CasasQueFecham(estado Estado) []Posicao // FEC-01, FEC-03, FEC-08: ordenadas por y e x, sem as que já são fixas
+func (c Config) AreaMinimaEfetiva() Area   // adendo: area_minima ou 5×5
+func (c Config) AnelFecha(n int) bool      // adendo: FEC-08
 ```
 
 ## Decisões
@@ -49,6 +54,8 @@ func CasasQueFecham(estado Estado) []Posicao // FEC-01, FEC-03: ordenadas por y 
 - **D4**: As casas novas são acrescentadas ao fim de `blocos_fixos`, depois de `slices.Clip`. **Motivo**: manter a ordem original (D7 do marco 2) e não escrever na capacidade do slice recebido (pureza, CA-08).
 - **D5**: O estado auxiliar do `aleatorio-v1` desliga o fechamento, e as casas que fecham entram na zona de perigo final. **Motivo**: o auxiliar usa `turno` 1 e fantasmas fora do tabuleiro, então o fechamento simulado ali seria o do turno errado.
 - **D6**: O oráculo `classificar` dos testes do bot desliga o fechamento ao explodir as bombas que sobram. **Motivo**: ele mede só o perigo das bombas; o fechamento do turno seguinte é decisão de outro turno.
+
+- **D7** (adendo): `area_minima` é um objeto com `omitzero`, e o zero vale 5×5. **Motivo**: o padrão pedido vale também para mapas sem o campo, e o JSON de estados sem fechamento não muda. Os testes de `jogo` com tabuleiros pequenos usam área 1×1 explícita.
 
 ## Riscos
 

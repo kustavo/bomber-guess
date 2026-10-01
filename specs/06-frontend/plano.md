@@ -43,7 +43,8 @@ export type TipoAcao = 'MOVER' | 'PLANTAR' | 'ESPERAR';
 export type Direcao = 'CIMA' | 'BAIXO' | 'ESQUERDA' | 'DIREITA';
 export type ResultadoAcao = 'EXECUTADA' | 'BLOQUEADA' | 'ABORTADA' | 'DESCARTADA' | 'IGNORADA';
 export interface Posicao { x: number; y: number }
-export interface Config { largura: number; altura: number; limite_turnos: number; turno_fechamento?: number; prazo_planejamento_ms: number; duracao_etapa_ms: number }
+export interface Area { largura: number; altura: number }
+export interface Config { largura: number; altura: number; limite_turnos: number; turno_fechamento?: number; area_minima?: Area; prazo_planejamento_ms: number; duracao_etapa_ms: number }
 export interface Bomba { posicao: Posicao; jogador_id: string; potencia: number; pavio_restante: number }
 export interface Morte { turno: number; etapa: number }
 export interface Jogador { id: string; posicao: Posicao; status: Status; morte?: Morte; bombas_por_turno: number; potencia: number; pavio_padrao: number; acoes_por_turno: number; bot_versao: string }
@@ -132,7 +133,7 @@ export function enderecoPartida(nome: string): string; // '#/partidas/<nome>'
   - `App.svelte` recebe `cliente` e `relogio` opcionais, para os testes.
   - `.claude/launch.json` sobe o servidor Go e o Vite para a verificação manual (CA-16).
   - Um componente `.svelte` sem `<script lang="ts">` não ganha tipos no `svelte-check`; todos os componentes têm o bloco.
-- **D13** (2026-10-01, marco 12): `calcularTabuleiro` acumula os `blocos_fechados` das etapas 1…k. Eles entram em `blocosFixos` e saem de `blocosDestrutiveis` (CA-17). `fabricas.ts` passa a preencher `blocos_fechados: []`. O SVG não muda, porque bloco fixo já é desenhado. **Motivo**: segue a D3 (recalcular do zero) e o mesmo padrão dos `blocos_destruidos`.
+- **D13** (2026-10-01, marco 12): `calcularTabuleiro` acumula os `blocos_fechados` das etapas 1…k. Eles entram em `blocosFixos` e saem de `blocosDestrutiveis` (CA-17). `fabricas.ts` passa a preencher `blocos_fechados: []`. O SVG não muda, porque bloco fixo já é desenhado. A área mínima (`area_minima`, EST-10 e FEC-08) só entra nos tipos: a tela não precisa dela, porque as casas que fecham já chegam em `blocos_fechados`. **Motivo**: segue a D3 (recalcular do zero) e o mesmo padrão dos `blocos_destruidos`.
 
 ## Riscos
 

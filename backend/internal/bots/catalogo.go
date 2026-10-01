@@ -20,7 +20,8 @@ type Catalogo map[string]Fabrica
 // aqui com uma linha.
 func Padrao() Catalogo {
 	return Catalogo{
-		aleatorio.Versao: func(s uint64) jogo.Bot { return aleatorio.Novo(s) },
+		aleatorio.Versao:   func(s uint64) jogo.Bot { return aleatorio.Novo(s) },
+		aleatorio.VersaoV2: func(s uint64) jogo.Bot { return aleatorio.NovoV2(s) },
 	}
 }
 

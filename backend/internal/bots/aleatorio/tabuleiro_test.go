@@ -167,3 +167,19 @@ func classificar(e jogo.Estado, jogadorID string, plano []jogo.Acao) categoria {
 	}
 	return seguro
 }
+
+// versaoDeTeste é uma versão do bot coberta pelos testes (D10 do marco 13).
+type versaoDeTeste struct {
+	nome string
+	novo func(semente uint64) *Bot
+}
+
+var versoesDeTeste = []versaoDeTeste{{Versao, Novo}, {VersaoV2, NovoV2}}
+
+// paraCadaVersao roda f num subteste por versão do bot (CA-02 do marco 13).
+func paraCadaVersao(t *testing.T, f func(t *testing.T, novo func(uint64) *Bot)) {
+	t.Helper()
+	for _, v := range versoesDeTeste {
+		t.Run(v.nome, func(t *testing.T) { f(t, v.novo) })
+	}
+}

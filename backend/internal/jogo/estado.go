@@ -8,12 +8,19 @@ type Posicao struct {
 
 // Config são os parâmetros da partida, copiados do mapa (MAP-01).
 type Config struct {
-	Largura             int `json:"largura"`
-	Altura              int `json:"altura"`
-	LimiteTurnos        int `json:"limite_turnos"`
-	TurnoFechamento     int `json:"turno_fechamento,omitempty"` // EST-09, FEC-01: 0 desliga
-	PrazoPlanejamentoMs int `json:"prazo_planejamento_ms"`      // EST-01
-	DuracaoEtapaMs      int `json:"duracao_etapa_ms"`           // EST-02
+	Largura             int  `json:"largura"`
+	Altura              int  `json:"altura"`
+	LimiteTurnos        int  `json:"limite_turnos"`
+	TurnoFechamento     int  `json:"turno_fechamento,omitempty"` // EST-09, FEC-01: 0 desliga
+	AreaMinima          Area `json:"area_minima,omitzero"`       // EST-10, FEC-08: zero vale 5×5
+	PrazoPlanejamentoMs int  `json:"prazo_planejamento_ms"`      // EST-01
+	DuracaoEtapaMs      int  `json:"duracao_etapa_ms"`           // EST-02
+}
+
+// Area é um retângulo de largura × altura casas.
+type Area struct {
+	Largura int `json:"largura"`
+	Altura  int `json:"altura"`
 }
 
 // Atributos que valem para as bombas e o plano de um jogador.

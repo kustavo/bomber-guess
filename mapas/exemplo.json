@@ -5,6 +5,7 @@
     "altura": 13,
     "limite_turnos": 50,
     "turno_fechamento": 30,
+    "area_minima": {"largura": 5, "altura": 5},
     "prazo_planejamento_ms": 1000,
     "duracao_etapa_ms": 1000
   },

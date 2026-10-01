@@ -30,7 +30,8 @@ Cada regra tem um **ID estável** (ex.: `BOM-05`). Specs, testes e commits citam
 - **Bot**: jogador controlado por uma implementação da interface `Bot`.
 - **Catálogo de bots**: lista das versões de bot disponíveis (`GET /bots`).
 - **Relatório de etapa** (`RelatorioEtapa`): o que aconteceu em uma etapa: posições, ações executadas, bombas, explosões, mortes e blocos destruídos. Usado no replay e no registro.
-- **Fechamento**: a partir de `turno_fechamento`, ao fim de cada turno o anel mais externo ainda aberto do tabuleiro vira bloco fixo, matando quem estiver nele (FEC-01 a FEC-07). Existe para evitar empates.
+- **Fechamento**: a partir de `turno_fechamento`, ao fim de cada turno o anel mais externo ainda aberto do tabuleiro vira bloco fixo, matando quem estiver nele, até sobrar a **área mínima** (FEC-01 a FEC-08). Existe para evitar empates.
+- **Área mínima**: retângulo central que nunca fecha (`area_minima`, FEC-08).
 - **Anel**: conjunto das casas a uma mesma distância da borda; o anel 0 é a borda (FEC-02).
 - **Desfecho** (`Desfecho`): situação da partida deduzida do estado: em andamento, vitória de um jogador ou empate (DEC-06).
 
@@ -53,6 +54,7 @@ No início de cada turno, o estado completo é representado assim:
       "altura": 13,
       "limite_turnos": 50,
       "turno_fechamento": 30,
+      "area_minima": {"largura": 5, "altura": 5},
       "prazo_planejamento_ms": 1000,
       "duracao_etapa_ms": 5
   },
@@ -104,6 +106,7 @@ Detalhes dos campos:
 - **EST-07** `morte`: turno e etapa em que o jogador morreu. Ausente enquanto ele está vivo.
 - **EST-08** `posicao` de um jogador morto é a casa onde ele morreu; ele não ocupa mais o tabuleiro (FIM-01).
 - **EST-09** `turno_fechamento`: turno a partir do qual o tabuleiro começa a fechar (FEC-01). Opcional; ausente ou `0` desliga o fechamento.
+- **EST-10** `area_minima`: largura e altura do retângulo que nunca fecha (FEC-08). Opcional; ausente ou com `largura` e `altura` `0`, vale 5×5.
 
 ## 3. Ações
 
@@ -182,15 +185,16 @@ Formato do **plano** de um jogador para um turno:
 
 ### Fechamento do tabuleiro
 
-Para evitar empates, o tabuleiro fecha de fora para dentro a partir de um turno configurado.
+Para evitar empates, o tabuleiro fecha de fora para dentro a partir de um turno configurado, até sobrar a área mínima.
 
 - **FEC-01** O fechamento é ligado por `turno_fechamento` (EST-09) com valor ≥ 1. Ausente ou `0`, nada desta seção se aplica.
 - **FEC-02** **Anel** `n` é o conjunto das casas `(x, y)` com `min(x, y, largura − 1 − x, altura − 1 − y) = n`. O anel 0 é a borda do tabuleiro; o anel 1 é a borda do que sobra dentro dela; e assim por diante.
-- **FEC-03** Ao fim de cada turno `T ≥ turno_fechamento`, depois da última etapa executada (ORD-08), o anel `T − turno_fechamento` vira bloco fixo: toda casa desse anel passa a estar em `blocos_fixos`. Ex.: com `turno_fechamento` 30, a borda fecha ao fim do turno 30, o anel 1 ao fim do turno 31. Quando o anel não tem mais casas (o tabuleiro já fechou por completo), nada acontece.
+- **FEC-03** Ao fim de cada turno `T ≥ turno_fechamento`, depois da última etapa executada (ORD-08), o anel `T − turno_fechamento` vira bloco fixo, se FEC-08 permitir: toda casa desse anel passa a estar em `blocos_fixos`. Ex.: com `turno_fechamento` 30, a borda fecha ao fim do turno 30, o anel 1 ao fim do turno 31. Quando o anel não pode fechar (FEC-08), nada acontece, nesse turno e nos seguintes.
 - **FEC-04** Jogador vivo em uma casa que fecha morre. A morte é registrada no turno `T` e na última etapa executada desse turno (EST-07). Se com isso todos os restantes morrerem, é empate (FIM-03).
 - **FEC-05** Bloco destrutível em uma casa que fecha deixa de existir e vira bloco fixo; não conta como bloco destruído.
 - **FEC-06** Bombas em uma casa que fecha são removidas sem explodir.
 - **FEC-07** Se a partida terminou no meio do turno (DEC-06), não há fechamento nesse turno.
+- **FEC-08** **Área mínima**: o anel `n` só fecha se o retângulo que sobra aberto depois dele, de `largura − 2(n + 1)` por `altura − 2(n + 1)` casas, ainda tiver pelo menos `area_minima` (EST-10) em cada dimensão, comparando largura com largura e altura com altura. O fechamento para no primeiro anel que não cumpre isso; os jogadores que sobram dentro da área mínima seguem jogando até haver vencedor ou até `limite_turnos` (FIM-04). Ex.: num tabuleiro 15×13 com área mínima 5×5, fecham os anéis 0 a 3 (sobram 13×11, 11×9, 9×7 e 7×5); o anel 4 não fecha, porque sobraria 5×3, e o retângulo 7×5 nunca fecha.
 
 ## 8. Decisões
 

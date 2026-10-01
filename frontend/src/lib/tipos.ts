@@ -12,11 +12,17 @@ export interface Posicao {
   y: number;
 }
 
+export interface Area {
+  largura: number;
+  altura: number;
+}
+
 export interface Config {
   largura: number;
   altura: number;
   limite_turnos: number;
   turno_fechamento?: number; // EST-09: ausente ou 0 = sem fechamento
+  area_minima?: Area; // EST-10: ausente vale 5×5
   prazo_planejamento_ms: number; // EST-01
   duracao_etapa_ms: number; // EST-02
 }

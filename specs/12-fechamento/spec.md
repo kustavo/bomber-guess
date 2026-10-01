@@ -1,6 +1,6 @@
 # Marco 12: fechamento do tabuleiro
 
-**Status**: concluída
+**Status**: concluída (com o adendo da área mínima, 2026-10-01)
 **Roadmap**: `docs/ROADMAP.md`, marco 12
 **Documentos de referência**: `docs/REGRAS.md` (seções 2, 6 e 7), `docs/ARQUITETURA.md` (seção 1.2), `docs/EDITOR.md` (formato do mapa)
 
@@ -20,6 +20,7 @@ Reduzir os empates. Com bots cautelosos, quase toda partida chegava a `limite_tu
 - Desenho do fechamento no terminal (marco 4).
 - O bot `aleatorio-v1` (marco 3) evita terminar o turno em casa que fecha.
 - `mapas/exemplo.json` com `turno_fechamento` 30.
+- **Adendo**: área mínima que nunca fecha (`area_minima`, 5×5 por padrão), com validação no mapa.
 
 **Fora**
 - Mostrar o fechamento no frontend: fica para o marco 6 (CA-17 de `specs/06-frontend/spec.md`).
@@ -37,7 +38,9 @@ Reduzir os empates. Com bots cautelosos, quase toda partida chegava a `limite_tu
 - `FEC-06`: bombas em casa que fecha somem sem explodir.
 - `FEC-07`: partida terminada no meio do turno não fecha.
 - `ORD-08`: o fechamento vem depois da última etapa.
-- `MAP-05`: `turno_fechamento` < 0, ou ≥ 1 e ≥ `limite_turnos`, torna o mapa inválido.
+- `MAP-05`: `turno_fechamento` < 0, ou ≥ 1 e ≥ `limite_turnos`, torna o mapa inválido; `area_minima` negativa ou maior que o tabuleiro também.
+- `EST-10`: `area_minima` no `config`; ausente ou zerada vale 5×5 (adendo).
+- `FEC-08`: o anel só fecha se o retângulo que sobra tiver pelo menos a área mínima (adendo).
 - Respeitadas sem mudança: `FIM-02`, `FIM-03`, `FIM-04`, `DEC-06`, `DEC-07`.
 
 ## Critérios de aceitação
@@ -58,6 +61,16 @@ Testes em `backend/internal/jogo/fechamento_test.go`, salvo indicação.
 - **CA-12** (FEC-04): **Dado** o `aleatorio-v1` num canto de um tabuleiro aberto no turno de fechamento, **quando** planeja, **então** o plano é seguro: ele termina fora da borda, para todas as sementes de 1 a 50 (`backend/internal/bots/aleatorio/fuga_test.go`).
 - **CA-13** (FEC-01, MAP-05): **Dado** `mapas/exemplo.json` com `turno_fechamento` 30, **quando** partidas só com `aleatorio-v1` são jogadas com as sementes de 1 a 50, **então** continuam valendo os critérios do marco 3 (sem infrações nem movimentos bloqueados, bombas planejadas com fuga segura) (`partida_test.go` do bot).
 
+### Adendo: área mínima
+
+Pedido pelo usuário em 2026-10-01, depois da entrega: o fechamento para antes de sobrar menos que uma área configurável, para que a partida termine por confronto e não por todos morrerem juntos no centro. Testes em `backend/internal/jogo/fechamento_test.go` e `mapa_test.go`.
+
+- **CA-14** (EST-10, FEC-08): **Dado** um tabuleiro 15×13 sem `area_minima`, **quando** se pergunta se cada anel pode fechar, **então** os anéis 0 a 3 fecham e o anel 4 não (sobrariam 5×3, menos que 5×5).
+- **CA-15** (FEC-08): **Dada** `area_minima` 1×1 no 15×13, **quando** se pergunta, **então** o anel 5 fecha (sobram 3×1) e o 6 não; largura e altura são comparadas sem girar (9×7 cabe em 9×7, 7×9 não).
+- **CA-16** (FEC-03, FEC-08): **Dado** um tabuleiro 7×7 com área mínima padrão e fechamento a partir do turno 1, **quando** três turnos são resolvidos, **então** só a borda fecha, os jogadores do anel 1 continuam vivos e a partida segue.
+- **CA-17** (MAP-05, FEC-08): **Dado** um mapa com `area_minima` de largura negativa ou maior que o tabuleiro, **quando** é verificado, **então** é inválido e a mensagem cita `area_minima`.
+- **CA-18** (EST-10): **Dado** o exemplo JSON de `docs/REGRAS.md` (seção 2, com `area_minima`), **quando** faz ida e volta, **então** o JSON é o mesmo (`docs_test.go`).
+
 ## Decisões
 
 Aprovadas pelo usuário em 2026-10-01, antes da implementação.
@@ -67,6 +80,7 @@ Aprovadas pelo usuário em 2026-10-01, antes da implementação.
 3. **Configuração**: `turno_fechamento` opcional; ausente ou `0` desliga. Mapas antigos continuam válidos.
 4. **`limite_turnos`**: mantido como rede de segurança; o mapa é inválido se `turno_fechamento` ≥ `limite_turnos`.
 5. **Velocidade**: um anel por turno, como pedido.
+6. **Área mínima (adendo)**: configurável em `area_minima` (largura e altura); ausente vale 5×5. O fechamento para no primeiro anel que deixaria menos que isso. Quem sobra dentro dela joga até haver vencedor ou até `limite_turnos`.
 
 ## Resultado medido
 
@@ -78,3 +92,5 @@ Aprovadas pelo usuário em 2026-10-01, antes da implementação.
 | 30 | 85 | 32,7 turnos |
 
 Os empates que sobram vêm sobretudo de bots iguais que morrem juntos quando o centro fecha.
+
+Com o adendo (área mínima 5×5, sobra o retângulo 7×5), as mesmas 200 partidas com 4 `aleatorio-v1` dão 69 empates.

@@ -80,7 +80,7 @@ As partidas do servidor (marco 5) vivem só em memória. Gravar o registro de ca
 
 ## 12. Fechamento do tabuleiro
 
-Para reduzir empates, a partir de `turno_fechamento` o tabuleiro fecha um anel por turno, de fora para dentro, e quem está no anel morre (FEC-01 a FEC-07). Feito fora da ordem, depois do marco 5, porque quase todas as partidas terminavam empatadas.
+Para reduzir empates, a partir de `turno_fechamento` o tabuleiro fecha um anel por turno, de fora para dentro, e quem está no anel morre, até sobrar a área mínima (`area_minima`, 5×5 por padrão) (FEC-01 a FEC-08). Feito fora da ordem, depois do marco 5, porque quase todas as partidas terminavam empatadas.
 
 ## 13. Bot aleatorio-v2
 

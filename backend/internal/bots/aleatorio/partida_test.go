@@ -27,7 +27,7 @@ func lerMapaExemplo(t *testing.T) jogo.Mapa {
 // jogarPartida joga uma partida no mapa com um bot aleatorio-v1 da semente
 // dada em cada posição inicial (D10), até o fim, verificando a cada turno os
 // CA-06, CA-07 e CA-21. Devolve quantos planos tinham PLANTAR.
-func jogarPartida(t *testing.T, m jogo.Mapa, semente uint64) int {
+func jogarPartida(t *testing.T, novo func(uint64) *Bot, m jogo.Mapa, semente uint64) int {
 	t.Helper()
 	versoes := make([]string, len(m.PosicoesIniciais))
 	for i := range versoes {
@@ -37,7 +37,7 @@ func jogarPartida(t *testing.T, m jogo.Mapa, semente uint64) int {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bot := Novo(semente)
+	bot := novo(semente)
 	plantios := 0
 	for !jogo.VerificarFim(e).Terminada {
 		var planos []jogo.Plano
@@ -72,18 +72,20 @@ func jogarPartida(t *testing.T, m jogo.Mapa, semente uint64) int {
 }
 
 func TestPartidaNoMapaExemplo(t *testing.T) {
-	m := lerMapaExemplo(t)
-	const sementes = 50
-	var plantios atomic.Int64
-	t.Run("sementes", func(t *testing.T) {
-		for semente := uint64(1); semente <= sementes; semente++ {
-			t.Run("VAL-01 CA-06 semente "+strconv.FormatUint(semente, 10), func(t *testing.T) {
-				t.Parallel()
-				plantios.Add(int64(jogarPartida(t, m, semente)))
-			})
+	paraCadaVersao(t, func(t *testing.T, novo func(uint64) *Bot) {
+		m := lerMapaExemplo(t)
+		const sementes = 50
+		var plantios atomic.Int64
+		t.Run("sementes", func(t *testing.T) {
+			for semente := uint64(1); semente <= sementes; semente++ {
+				t.Run("VAL-01 CA-06 semente "+strconv.FormatUint(semente, 10), func(t *testing.T) {
+					t.Parallel()
+					plantios.Add(int64(jogarPartida(t, novo, m, semente)))
+				})
+			}
+		})
+		if plantios.Load() == 0 {
+			t.Error("BOM-01 CA-12 nenhum plano com PLANTAR em nenhuma partida")
 		}
 	})
-	if plantios.Load() == 0 {
-		t.Error("BOM-01 CA-12 nenhum plano com PLANTAR em nenhuma partida")
-	}
 }

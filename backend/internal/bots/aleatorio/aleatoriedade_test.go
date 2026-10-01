@@ -18,63 +18,69 @@ const campoAberto = `
 `
 
 func TestMesmaEntradaMesmoPlano(t *testing.T) {
-	casos := []struct {
-		nome   string
-		opcoes []opcao
-	}{
-		{"CA-09 campo aberto", nil},
-		{"CA-09 com bombas", []opcao{comBomba(1, 2, "jogador_2", 2, 2), comBomba(5, 1, "jogador_2", 1, 9)}},
-		{"CA-09 turno 7", []opcao{comTurno(7)}},
-	}
-	for _, c := range casos {
-		t.Run(c.nome, func(t *testing.T) {
-			e := montar(t, campoAberto, c.opcoes...)
-			for semente := uint64(1); semente <= 20; semente++ {
-				bot := Novo(semente)
-				primeiro := bot.Planejar(e.Copiar(), "jogador_1")
-				bot.Planejar(e.Copiar(), "jogador_2") // outra chamada no meio não muda nada
-				mesmoBot := bot.Planejar(e.Copiar(), "jogador_1")
-				outroBot := Novo(semente).Planejar(e.Copiar(), "jogador_1")
-				if !reflect.DeepEqual(primeiro, mesmoBot) || !reflect.DeepEqual(primeiro, outroBot) {
-					t.Fatalf("semente %d: planos diferentes:\n %+v\n %+v\n %+v", semente, primeiro, mesmoBot, outroBot)
+	paraCadaVersao(t, func(t *testing.T, novo func(uint64) *Bot) {
+		casos := []struct {
+			nome   string
+			opcoes []opcao
+		}{
+			{"CA-09 campo aberto", nil},
+			{"CA-09 com bombas", []opcao{comBomba(1, 2, "jogador_2", 2, 2), comBomba(5, 1, "jogador_2", 1, 9)}},
+			{"CA-09 turno 7", []opcao{comTurno(7)}},
+		}
+		for _, c := range casos {
+			t.Run(c.nome, func(t *testing.T) {
+				e := montar(t, campoAberto, c.opcoes...)
+				for semente := uint64(1); semente <= 20; semente++ {
+					bot := novo(semente)
+					primeiro := bot.Planejar(e.Copiar(), "jogador_1")
+					bot.Planejar(e.Copiar(), "jogador_2") // outra chamada no meio não muda nada
+					mesmoBot := bot.Planejar(e.Copiar(), "jogador_1")
+					outroBot := novo(semente).Planejar(e.Copiar(), "jogador_1")
+					if !reflect.DeepEqual(primeiro, mesmoBot) || !reflect.DeepEqual(primeiro, outroBot) {
+						t.Fatalf("semente %d: planos diferentes:\n %+v\n %+v\n %+v", semente, primeiro, mesmoBot, outroBot)
+					}
 				}
-			}
-		})
-	}
+			})
+		}
+	})
 }
 
 func TestSementesDiferentesPlanosDiferentes(t *testing.T) {
-	e := montar(t, campoAberto)
-	distintos := map[string]bool{}
-	for semente := uint64(1); semente <= 20; semente++ {
-		distintos[formatar(Novo(semente).Planejar(e.Copiar(), "jogador_1"))] = true
-	}
-	if len(distintos) < 2 {
-		t.Errorf("CA-10 só %d plano distinto em 20 sementes", len(distintos))
-	}
+	paraCadaVersao(t, func(t *testing.T, novo func(uint64) *Bot) {
+		e := montar(t, campoAberto)
+		distintos := map[string]bool{}
+		for semente := uint64(1); semente <= 20; semente++ {
+			distintos[formatar(novo(semente).Planejar(e.Copiar(), "jogador_1"))] = true
+		}
+		if len(distintos) < 2 {
+			t.Errorf("CA-10 só %d plano distinto em 20 sementes", len(distintos))
+		}
+	})
 }
 
 func TestJogadoresETurnosDiferentes(t *testing.T) {
-	e := montar(t, campoAberto)
-	outroTurno := montar(t, campoAberto, comTurno(2))
-	espelhoDiferente, turnoDiferente := false, false
-	for semente := uint64(1); semente <= 20; semente++ {
-		bot := Novo(semente)
-		p1 := bot.Planejar(e.Copiar(), "jogador_1")
-		p2 := bot.Planejar(e.Copiar(), "jogador_2")
-		if !reflect.DeepEqual(espelhar(p1), p2) {
-			espelhoDiferente = true
+	paraCadaVersao(t, func(t *testing.T, novo func(uint64) *Bot) {
+		e := montar(t, campoAberto)
+		outroTurno := montar(t, campoAberto, comTurno(2))
+		espelhoDiferente, turnoDiferente := false, false
+		for semente := uint64(1); semente <= 20; semente++ {
+			bot := novo(semente)
+			p1 := bot.Planejar(e.Copiar(), "jogador_1")
+			p2 := bot.Planejar(e.Copiar(), "jogador_2")
+			if !reflect.DeepEqual(espelhar(p1), p2) {
+				espelhoDiferente = true
+			}
+			if !reflect.DeepEqual(p1, bot.Planejar(outroTurno.Copiar(), "jogador_1")) {
+				turnoDiferente = true
+			}
 		}
-		if !reflect.DeepEqual(p1, bot.Planejar(outroTurno.Copiar(), "jogador_1")) {
-			turnoDiferente = true
+		if !espelhoDiferente {
+			t.Error("CA-11 jogadores simétricos com planos sempre espelhados")
 		}
-	}
-	if !espelhoDiferente {
-		t.Error("CA-11 jogadores simétricos com planos sempre espelhados")
-	}
-	if !turnoDiferente {
-		t.Error("CA-11 o mesmo jogador tem o mesmo plano em turnos diferentes")
-	}
+		if !turnoDiferente {
+			t.Error("CA-11 o mesmo jogador tem o mesmo plano em turnos diferentes")
+		}
+	})
 }
 
 // espelhar troca ESQUERDA e DIREITA.

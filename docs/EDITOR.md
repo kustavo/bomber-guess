@@ -17,6 +17,7 @@ O mapa salvo segue o mesmo formato dos arquivos em `mapas/`. Coordenadas conform
     "altura": 13,
     "limite_turnos": 50,
     "turno_fechamento": 30,
+    "area_minima": {"largura": 5, "altura": 5},
     "prazo_planejamento_ms": 1000,
     "duracao_etapa_ms": 5
   },
@@ -36,5 +37,5 @@ O mapa salvo segue o mesmo formato dos arquivos em `mapas/`. Coordenadas conform
 - **MAP-02** `jogador_padrao` define os atributos iniciais de todos os jogadores.
 - **MAP-03** O mapa não sabe quais bots jogam. O estado inicial é criado com `EstadoInicial(mapa, versoes)`: a versão `i` joga na posição inicial `i`, com id `jogador_<i+1>`.
 - **MAP-04** O estado inicial começa no turno 1, sem bombas, com todos os jogadores `VIVO`.
-- **MAP-05** Um mapa é inválido se: `largura` ou `altura` ≤ 0; algum bloco ou posição inicial está fora do tabuleiro; uma posição inicial está sobre um bloco; a mesma casa tem bloco fixo e destrutível; há menos de 2 posições iniciais; `limite_turnos` < 1; `turno_fechamento` < 0, ou ≥ 1 e ≥ `limite_turnos` (FEC-01); algum atributo de `jogador_padrao` (`bombas_por_turno`, `potencia`, `pavio_padrao`, `acoes_por_turno`) é < 1.
+- **MAP-05** Um mapa é inválido se: `largura` ou `altura` ≤ 0; algum bloco ou posição inicial está fora do tabuleiro; uma posição inicial está sobre um bloco; a mesma casa tem bloco fixo e destrutível; há menos de 2 posições iniciais; `limite_turnos` < 1; `turno_fechamento` < 0, ou ≥ 1 e ≥ `limite_turnos` (FEC-01); `area_minima` com `largura` ou `altura` < 0, ou maior que o tabuleiro (FEC-08); algum atributo de `jogador_padrao` (`bombas_por_turno`, `potencia`, `pavio_padrao`, `acoes_por_turno`) é < 1.
 - **MAP-06** `EstadoInicial` também falha se a quantidade de versões for diferente da quantidade de posições iniciais.

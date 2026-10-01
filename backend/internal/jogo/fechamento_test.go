@@ -5,9 +5,13 @@ import (
 	"testing"
 )
 
-// comFechamento liga o fechamento a partir do turno dado (FEC-01).
+// comFechamento liga o fechamento a partir do turno dado (FEC-01), com área
+// mínima 1×1 para que os tabuleiros pequenos dos testes fechem (FEC-08).
 func comFechamento(turno int) opcao {
-	return func(e *Estado) { e.Config.TurnoFechamento = turno }
+	return func(e *Estado) {
+		e.Config.TurnoFechamento = turno
+		e.Config.AreaMinima = Area{Largura: 1, Altura: 1}
+	}
 }
 
 func TestAnel(t *testing.T) {
@@ -48,8 +52,15 @@ func TestCasasQueFecham(t *testing.T) {
 		{"FEC-03 no turno_fechamento fecha a borda", montar(t, desenho, comFechamento(3), comTurno(3)), []Posicao{
 			p(0, 0), p(1, 0), p(2, 0), p(3, 0), p(4, 0), p(0, 1), p(4, 1), p(0, 2), p(1, 2), p(2, 2), p(3, 2), p(4, 2),
 		}},
-		{"FEC-03 um turno depois fecha o anel 1, menos os blocos fixos", montar(t, desenho, comFechamento(3), comTurno(4)), []Posicao{p(2, 1), p(3, 1)}},
-		{"FEC-03 tabuleiro já fechado não fecha nada", montar(t, desenho, comFechamento(3), comTurno(5)), []Posicao{}},
+		{"FEC-08 o anel 1 não fecha: sobraria menos que 1×1", montar(t, desenho, comFechamento(3), comTurno(4)), []Posicao{}},
+		{"FEC-03 FEC-08 depois de parar, não fecha mais nada", montar(t, desenho, comFechamento(3), comTurno(5)), []Posicao{}},
+		{"FEC-03 um turno depois fecha o anel 1, menos os blocos fixos", montar(t, `
+			1......
+			.......
+			..#....
+			......2
+			.......
+		`, comFechamento(3), comTurno(4)), []Posicao{p(1, 1), p(2, 1), p(3, 1), p(4, 1), p(5, 1), p(1, 2), p(5, 2), p(1, 3), p(2, 3), p(3, 3), p(4, 3), p(5, 3)}},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -58,6 +69,54 @@ func TestCasasQueFecham(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAreaMinima(t *testing.T) {
+	c := Config{Largura: 15, Altura: 13}
+	casos := []struct {
+		nome  string
+		area  Area
+		anel  int
+		fecha bool
+	}{
+		{"EST-10 FEC-08 padrão 5×5: anel 3 fecha, sobram 7×5", Area{}, 3, true},
+		{"EST-10 FEC-08 padrão 5×5: anel 4 não fecha, sobrariam 5×3", Area{}, 4, false},
+		{"FEC-08 anel 5 também não fecha", Area{}, 5, false},
+		{"FEC-08 área 1×1: anel 5 fecha, sobram 3×1", Area{Largura: 1, Altura: 1}, 5, true},
+		{"FEC-08 área 1×1: anel 6 não fecha", Area{Largura: 1, Altura: 1}, 6, false},
+		{"FEC-08 largura e altura comparadas sem girar: 9×7 cabe em 9×7", Area{Largura: 9, Altura: 7}, 2, true},
+		{"FEC-08 largura e altura comparadas sem girar: 7×9 não cabe em 9×7", Area{Largura: 7, Altura: 9}, 2, false},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c.AreaMinima = caso.area
+			if f := c.AnelFecha(caso.anel); f != caso.fecha {
+				t.Errorf("AnelFecha(%d) = %v, esperado %v", caso.anel, f, caso.fecha)
+			}
+		})
+	}
+
+	t.Run("FEC-08 quem está na área mínima não morre e o fechamento para", func(t *testing.T) {
+		e := montar(t, `
+			.......
+			.1.....
+			.......
+			.......
+			.......
+			.....2.
+			.......
+		`, comAcoes(1))
+		e.Config.TurnoFechamento = 1
+		for range 3 {
+			e, _ = ResolverTurno(e, nil)
+		}
+		if len(e.BlocosFixos) != 24 {
+			t.Errorf("%d blocos fixos, esperado só a borda (24)", len(e.BlocosFixos))
+		}
+		if d := VerificarFim(e); d.Terminada {
+			t.Errorf("desfecho = %+v, esperado partida em andamento", d)
+		}
+	})
 }
 
 func TestFechamento(t *testing.T) {

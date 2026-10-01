@@ -1,6 +1,6 @@
 # Marco 13: bot aleatorio-v2 (sobrevive ao fechamento)
 
-**Status**: aprovada
+**Status**: concluída
 **Roadmap**: `docs/ROADMAP.md`, marco 13
 **Documentos de referência**: `docs/BOTS.md`, `docs/REGRAS.md` (em especial a seção 7, "Fechamento do tabuleiro"); `specs/03-bot-simples/spec.md` (comportamento do `aleatorio-v1`, que o v2 estende)
 
@@ -15,8 +15,8 @@ O `aleatorio-v1` não muda. Ele continua no catálogo como referência mais frac
 Valem os termos do marco 3: **simulação do turno**, **plano seguro** e **plano sobrevivente**. Além deles:
 
 - **Casas que fecham**: as casas que viram bloco fixo ao fim do turno atual (`CasasQueFecham`, FEC-03).
-- **Anel alvo** do turno `T`: o menor anel em que o bot quer terminar o turno, com uma margem sobre o que fecha no turno seguinte. Ver questão 1.
-- **Janela de antecipação**: os turnos em que o anel alvo vale. Antes dela, o bot anda como o v1. Ver questão 1.
+- **Anel alvo** do turno `T`: o menor anel em que o bot quer terminar o turno, com uma margem sobre o que fecha no turno seguinte. Ver decisão 1.
+- **Janela de antecipação**: os turnos em que o anel alvo vale. Antes e depois dela, o bot anda como o v1. Ver decisão 1.
 - **Região**: as casas que o bot alcança a partir da casa atual andando só por casas livres, sem atravessar blocos, ignorando bombas e quantidade de etapas.
 - **Preso**: a região do bot não tem nenhuma casa no anel alvo.
 - **Bloco de abertura**: o primeiro bloco destrutível do caminho mais curto até o anel alvo, contando cada bloco destrutível atravessado como custo. Destruí-lo é o que tira o bot da prisão.
@@ -40,7 +40,7 @@ Valem os termos do marco 3: **simulação do turno**, **plano seguro** e **plano
 ## Regras cobertas
 
 - `BOT-01` a `BOT-04`, `VAL-01` a `VAL-06`, `ACA-01`, `ACA-02`, `MOV-02`, `MOV-03`, `MOV-05`, `BOM-01` a `BOM-12`, `ORD-01` a `ORD-07`, `EST-03`, `EST-04`, `EST-08`, `FIM-01`: como no marco 3.
-- `EST-09`, `FEC-01` a `FEC-04`: previsão do fechamento no turno atual e nos seguintes.
+- `EST-09`, `EST-10`, `FEC-01` a `FEC-04`, `FEC-08`: previsão do fechamento no turno atual e nos seguintes, até a área mínima.
 - `FEC-05`: bloco destrutível que fecha deixa de ser bloco de abertura útil.
 - `FEC-07`, `DEC-06`: fim antecipado na simulação conta como seguro, como no v1.
 
@@ -82,7 +82,7 @@ Partidas jogadas com `Validar` e `ResolverTurno`, como no CA-06 do marco 3, seme
 
 Questões levantadas no rascunho e aprovadas pelo usuário em 2026-10-01, com as propostas como estavam.
 
-1. **Janela e anel alvo.** Proposta: com o fechamento ligado e `f = turno_fechamento`, a janela começa no turno `f − 3`. No turno `T` dentro dela, o anel alvo é `max(0, T − f + 1) + 1`, limitado ao maior anel do tabuleiro. Ou seja: o anel que fecha no turno seguinte mais uma casa de margem. Exemplo com `f` 30: nos turnos 27 a 29 o alvo é o anel 1 (sair da borda); no turno 30 é o anel 2; no turno 31, o anel 3.
+1. **Janela e anel alvo** (revista na implementação, ver R1 e R2). Com o fechamento ligado, `f = turno_fechamento` e `k` = primeiro anel que nunca fecha (FEC-08), a janela vai do turno `f − 3` até o turno `f + k − 1`, em que fecha o último anel que pode fechar. No turno `T` dentro dela, o anel alvo é `max(0, T − f + 1) + 2`, limitado a `k` e ao maior anel do tabuleiro. Ou seja: o anel que fecha no turno seguinte mais duas casas de margem. Exemplo no mapa de exemplo (`f` 30, `k` 4): nos turnos 27 a 29 o alvo é o anel 2; no turno 30, o anel 3; do turno 31 ao 33, o anel 4; do turno 34 em diante a janela acabou e o v2 joga como o v1.
 2. **v2 igual ao v1 sem fechamento.** Proposta: sim (CA-04 e CA-06). Assim, a diferença entre as versões no ranking mede só a estratégia contra o fechamento. O custo é o v2 herdar todas as limitações do v1 fora da janela.
 3. **Ordem de preferência dos planos dentro da janela.** Proposta, do melhor para o pior:
    1. seguro e no anel alvo;
@@ -93,6 +93,20 @@ Questões levantadas no rascunho e aprovadas pelo usuário em 2026-10-01, com as
    6. o que sobrevive mais etapas.
 
    Fora da janela, vale a ordem do v1, mais o item 4 (CA-10), que só muda algo quando há casas que fecham.
-4. **Limites dos testes de comparação.** Proposta: mortes por fechamento com v2 ≤ 25% das do v1 (hoje 631 nas sementes 1 a 200, então ≤ 158), e v2 com pelo menos o dobro de vitórias do v1 no confronto 2 contra 2. Se a implementação ficar longe disso, os números voltam para revisão em vez de afrouxar o teste em silêncio.
-5. **Efeito nos empates.** Bots que sobrevivem ao fechamento tendem a chegar juntos ao centro e morrer juntos quando o último anel fecha. Com 4 v2 os empates podem até aumentar em relação ao v1 (85 de 200). Proposta: não pôr meta de empates neste marco, só registrar (CA-16). Se os empates continuarem altos, a solução é de regra (por exemplo, desempate por quem morreu por último ou por blocos destruídos), discutida à parte.
+4. **Limites dos testes de comparação** (ver R1 e R3). Mortes por fechamento com v2 ≤ 25% das do v1 nas mesmas sementes, e v2 com pelo menos o dobro de vitórias do v1 no confronto 2 contra 2. Se a implementação ficar longe disso, os números voltam para revisão em vez de afrouxar o teste em silêncio.
+5. **Efeito nos empates.** Sem área mínima, bots que sobrevivem ao fechamento tendem a chegar juntos ao centro e morrer juntos quando o último anel fecha. Com 4 v2 os empates podem até aumentar em relação ao v1 (85 de 200). Proposta: não pôr meta de empates neste marco, só registrar (CA-16). Se os empates continuarem altos, a solução é de regra (por exemplo, desempate por quem morreu por último ou por blocos destruídos), discutida à parte.
 6. **Bombas aleatórias.** O v1 tenta plantar em cerca de metade dos turnos. Proposta: dentro da janela, a bomba de abertura (quando preso) substitui o sorteio; fora da janela, nada muda.
+
+## Revisões durante a implementação
+
+- **R1** (aprovada em 2026-10-01): margem do anel alvo de 1 para 2 (decisão 1). Com margem 1, o v2 ficava preso atrás de blocos no anel 3 enquanto o fechamento avançava um anel por turno. Na época, sem área mínima, o CA-14 também mudou para "anel médio das mortes por fechamento pelo menos 1 anel mais fundo que o do v1", porque todo sobrevivente acabava morrendo no fechamento do centro e a contagem de mortes não podia cair.
+- **R2** (regra nova pedida pelo usuário em 2026-10-01): área mínima que nunca fecha (EST-10, FEC-08; adendo do marco 12). Consequências no v2:
+  - o anel alvo é limitado ao primeiro anel que nunca fecha;
+  - a janela termina quando fecha o último anel que pode fechar. Sem isso, o v2 ficava na janela para sempre, sem as bombas aleatórias (decisão 6), e 196 de 200 partidas com 4 v2 empatavam por `limite_turnos`. Com a janela terminando, ele volta a jogar como o v1 dentro da área mínima.
+- **R3** (aprovada em 2026-10-01): com a área mínima, a contagem de mortes por fechamento voltou a medir o que importa, e o anel médio deixou de medir: os anéis que podem fechar vão só de 0 a 3. Decisão: voltar o CA-14 ao texto original (≤ 25% das mortes por fechamento do v1, e nenhuma com saída disponível). Medido nas sementes 1 a 200:
+
+  | | Mortes por fechamento | Anel médio | Mortes por bomba | Empates (4 iguais) | 2 contra 2 |
+  |---|---|---|---|---|---|
+  | v1 | 587 | 2,34 | 76 | 69 | 18 vitórias |
+  | v2 | 91 (15,5%) | 2,63 | 441 | 76 | 82 vitórias |
+
