@@ -87,38 +87,40 @@ Isso permite medir, por exemplo, quantas infrações cada IA comete e quantas ve
 
 ## 2. Loop da partida (pacote `internal/partida`)
 
-A partida roda **em tempo real** no servidor. Cada partida tem seu próprio loop de jogo, e quem abre a partida assiste ao estado atual, não a um replay.
+- **PAR-01** A partida roda **em tempo real** no servidor. Cada partida tem seu próprio loop de jogo, e quem abre a partida assiste ao estado atual, não a um replay.
 
 Cada turno tem duas fases:
 
-1. **Planejamento**: o servidor abre o turno com prazo de `prazo_planejamento_ms`. Os jogadores enviam seus planos, que vão para a fila. Os bots rodam nessa fase como qualquer outro jogador; na versão 2, humanos enviam via API.
-2. **Execução**: ao fim do prazo, o servidor consome a fila, passa as ações por `Validar` e `ResolverTurno` e libera as etapas uma a uma, a cada `duracao_etapa_ms`.
+1. **PAR-02** **Planejamento**: o servidor abre o turno com prazo de `prazo_planejamento_ms`. Os jogadores enviam seus planos, que vão para a fila. Os bots rodam nessa fase como qualquer outro jogador; na versão 2, humanos enviam via API.
+2. **PAR-03** **Execução**: ao fim do prazo, o servidor consome a fila, passa as ações por `Validar` e `ResolverTurno` e libera as etapas uma a uma, a cada `duracao_etapa_ms`.
 
-Jogador que não enviar o plano dentro do prazo fica com todas as etapas em `ESPERAR`.
+- **PAR-04** Jogador que não enviar o plano dentro do prazo fica com todas as etapas em `ESPERAR`.
 
-**Registro**: tudo o que acontece é gravado (ações nas três versões e resultado de cada etapa), então é possível rever partidas antigas, mas isso é um recurso extra, não o modo principal.
+- **PAR-05** **Registro**: tudo o que acontece é gravado (ações nas três versões e resultado de cada etapa), então é possível rever partidas antigas, mas isso é um recurso extra, não o modo principal.
 
 ## 3. Fila (pacote `internal/fila`)
 
-A fila fica atrás de uma interface. Primeira implementação em memória; depois Kafka, sem mudar quem usa a interface.
+- **FILA-01** A fila fica atrás de uma interface. Primeira implementação em memória; depois Kafka, sem mudar quem usa a interface.
 
-Tópicos Kafka:
+- **FILA-02** Tópicos Kafka:
 
-- `planos-enviados`: plano de cada jogador durante o planejamento (a fila do turno).
-- `turno-resolvido`: resultado de cada turno.
-- `partida-finalizada`: consumido pelo serviço de ranking e estatísticas.
+  - `planos-enviados`: plano de cada jogador durante o planejamento (a fila do turno).
+  - `turno-resolvido`: resultado de cada turno.
+  - `partida-finalizada`: consumido pelo serviço de ranking e estatísticas.
 
 ## 4. API HTTP (pacote `internal/api`)
 
-Sem WebSockets. O frontend consulta o estado periodicamente.
+- **API-01** Sem WebSockets. O frontend consulta o estado periodicamente.
 
-**Sincronização do cronômetro**: toda resposta da API inclui o horário do servidor, a fase atual e o horário de término dessa fase. O frontend calcula a diferença entre seu relógio e o do servidor e exibe o cronômetro a partir disso. Se a página for recarregada, basta consultar o endpoint de estado para se ressincronizar.
+- **API-02** **Sincronização do cronômetro**: toda resposta da API inclui o horário do servidor, a fase atual e o horário de término dessa fase. O frontend calcula a diferença entre seu relógio e o do servidor e exibe o cronômetro a partir disso. Se a página for recarregada, basta consultar o endpoint de estado para se ressincronizar.
 
 Endpoints:
 
-- `POST /mapas`: salva um mapa criado no editor.
-- `POST /partidas`: cria uma partida (nome, mapa, bots em cada posição) e inicia o loop.
-- `GET /partidas/{nome}/estado`: estado atual, fase, etapa em execução, horário do servidor e fim da fase.
-- `POST /partidas/{nome}/turnos/{n}/plano`: envia o plano de um jogador (usado pelos humanos na v2).
-- `GET /partidas/{nome}/historico`: registro completo, para rever partidas encerradas.
-- `GET /ranking` e `GET /bots`.
+- **API-03** `POST /mapas`: salva um mapa criado no editor.
+- **API-04** `POST /partidas`: cria uma partida (nome, mapa, bots em cada posição) e inicia o loop.
+- **API-05** `GET /partidas/{nome}/estado`: estado atual, fase, etapa em execução, horário do servidor e fim da fase.
+- **API-06** `POST /partidas/{nome}/turnos/{n}/plano`: envia o plano de um jogador (usado pelos humanos na v2).
+- **API-07** `GET /partidas/{nome}/historico`: registro completo, para rever partidas encerradas.
+- **API-08** `GET /ranking`.
+- **API-09** `GET /bots`: versões do catálogo de bots.
+- **API-10** `GET /partidas`: lista as partidas (nome, fase, turno e desfecho), na ordem de criação.

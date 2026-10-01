@@ -16,6 +16,7 @@ Cada marco segue o fluxo de `specs/README.md` (`/especificar` → `/planejar` �
 | 8 | Kafka | ARQUITETURA (seção 3) | médio |
 | 9 | Ranking e estatísticas | RANKING | médio |
 | 10 | Bots de outras IAs | BOTS, REGRAS | cada IA |
+| 11 | Partidas salvas em disco | ARQUITETURA (seção 2) | médio |
 
 ## 1. Tipos em Go
 
@@ -70,6 +71,10 @@ Conforme `docs/RANKING.md`.
 ## 10. Bots criados por outras IAs
 
 Cada IA recebe apenas `AGENTS.md`, `docs/BOTS.md` e `docs/REGRAS.md`. Ferramentas que leem `AGENTS.md` sozinhas (Codex, Cursor, Copilot etc.) já o recebem ao abrir o repositório; nas de chat, cole os três arquivos.
+
+## 11. Partidas salvas em disco
+
+As partidas do servidor (marco 5) vivem só em memória. Gravar o registro de cada partida para que sobreviva a um reinício e possa ser revista depois (`PAR-05`, glossário: a partida "fica salva").
 
 ## Versão 2 (depois de tudo acima)
 
