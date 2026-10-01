@@ -51,6 +51,7 @@ bomberai/
 - Funções recebem e devolvem cópias do estado; nunca alteram o estado recebido.
 - Testes de tabela (`[]struct{ nome string; ... }` + `t.Run`) para cada regra. Todo código novo vem com testes.
 - `gofmt` e `go vet` sem avisos. `go test ./...` precisa passar antes de encerrar uma tarefa.
+- Frontend (quando a tarefa mexer em `frontend/`): `npm run check` sem erros e `npm test` passando, ambos dentro de `frontend/`.
 - Alterações pontuais: não reescrever arquivos inteiros sem necessidade.
 
 ## Como trabalhar (spec-driven)
