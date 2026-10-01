@@ -3,7 +3,8 @@ import { describe, expect, test } from 'vitest';
 import Tabuleiro from './Tabuleiro.svelte';
 import PainelJogadores from './PainelJogadores.svelte';
 import { calcularTabuleiro } from '../lib/tabuleiro';
-import { estado, jogador, jogadorEtapa, p, relatorio } from '../testes/fabricas';
+import { estado, explosao, jogador, jogadorEtapa, p, relatorio } from '../testes/fabricas';
+import { corJogador } from '../lib/textos';
 
 const casas = (c: HTMLElement, tipo: string) =>
   [...c.querySelectorAll(`[data-tipo="${tipo}"]`)].map((e) => [Number(e.getAttribute('data-x')), Number(e.getAttribute('data-y'))]);
@@ -86,5 +87,87 @@ describe('PainelJogadores', () => {
     });
     const { container } = render(PainelJogadores, { jogadores: calcularTabuleiro(estado(), [r], 1).jogadores });
     expect(container.querySelector('[data-jogador="jogador_1"] .acao')?.textContent).toBe('Mover ↑ · bloqueada');
+  });
+});
+
+// sprite: o sprite usado dentro do elemento de data-tipo na casa (x, y).
+const sprite = (c: HTMLElement, tipo: string, x: number, y: number) =>
+  c.querySelector(`[data-tipo="${tipo}"][data-x="${x}"][data-y="${y}"] use`)?.getAttribute('data-sprite');
+
+describe('Tabuleiro com sprites (marco 14)', () => {
+  test('CA-04 cada elemento usa o sprite do seu tipo; o piso cobre todas as casas', () => {
+    const e = estado({ bombas: [{ posicao: p(1, 0), jogador_id: 'jogador_1', potencia: 2, pavio_restante: 2 }] });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [], 0) });
+    expect(sprite(container, 'bloco-fixo', 2, 2)).toBe('bloco-fixo');
+    expect(sprite(container, 'bloco-destrutivel', 2, 0)).toBe('bloco-destrutivel');
+    expect(sprite(container, 'bomba', 1, 0)).toBe('bomba');
+    expect(sprite(container, 'jogador', 0, 0)).toBe('jogador');
+    const pisos = [...container.querySelectorAll('use[data-sprite="piso"]')];
+    expect(pisos).toHaveLength(25);
+    expect(pisos.every((u) => !u.closest('[data-tipo]'))).toBe(true); // piso não é elemento (D4)
+    for (const u of container.querySelectorAll('use')) expect(u.getAttribute('href')).toBe(`#sprite-${u.getAttribute('data-sprite')}`);
+  });
+
+  test('CA-02 o tabuleiro não pede nada à rede', () => {
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(estado(), [], 0) });
+    expect(container.querySelector('image')).toBeNull();
+    for (const u of container.querySelectorAll('[href]')) expect(u.getAttribute('href')?.startsWith('#')).toBe(true);
+  });
+
+  test('CA-05 cada jogador com a sua cor e o seu número', () => {
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(estado(), [], 0) });
+    const js = [...container.querySelectorAll('[data-tipo="jogador"]')];
+    expect(js.map((j) => (j.querySelector('use') as SVGElement).style.color)).toEqual(
+      [corJogador(0), corJogador(1)].map((c) => {
+        const d = document.createElement('div');
+        d.style.color = c;
+        return d.style.color;
+      }),
+    );
+    expect(js.map((j) => j.querySelector('.numero')?.textContent)).toEqual(['1', '2']);
+  });
+
+  test('CA-06 bomba usa o sprite e mostra o pavio', () => {
+    const e = estado({ bombas: [{ posicao: p(3, 3), jogador_id: 'jogador_1', potencia: 2, pavio_restante: 3 }] });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [], 0) });
+    expect(sprite(container, 'bomba', 3, 3)).toBe('bomba');
+    expect(container.querySelector('[data-tipo="bomba"]')?.textContent).toBe('3');
+  });
+
+  test('DEC-09 CA-07 marca de bloqueio sobre o sprite do jogador', () => {
+    const r = relatorio(1, { movimentos_bloqueados: ['jogador_2'] });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(estado(), [r], 1) });
+    expect(container.querySelector('[data-jogador="jogador_2"] .marca-bloqueio')).not.toBeNull();
+    expect(container.querySelector('[data-jogador="jogador_1"] .marca-bloqueio')).toBeNull();
+  });
+
+  test('FEC-03 FEC-05 CA-08 casa fechada usa o sprite de bloco fixo', () => {
+    const r = relatorio(1, { blocos_fechados: [p(0, 2), p(2, 0)] });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(estado(), [r], 1) });
+    expect(sprite(container, 'bloco-fixo', 0, 2)).toBe('bloco-fixo');
+    expect(sprite(container, 'bloco-fixo', 2, 0)).toBe('bloco-fixo');
+    expect(container.querySelector('[data-tipo="bloco-destrutivel"]')).toBeNull();
+  });
+
+  test('CA-09 cada chama usa o sprite da sua forma', () => {
+    const e = explosao(p(1, 1), [p(0, 1), p(2, 1), p(3, 1), p(1, 0)]);
+    const r = relatorio(1, { explosoes: [e], chamas: e.chamas });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(estado(), [r], 1) });
+    expect(sprite(container, 'chama', 1, 1)).toBe('chama-centro');
+    expect(sprite(container, 'chama', 0, 1)).toBe('chama-ponta-esquerda');
+    expect(sprite(container, 'chama', 2, 1)).toBe('chama-horizontal');
+    expect(sprite(container, 'chama', 3, 1)).toBe('chama-ponta-direita');
+    expect(sprite(container, 'chama', 1, 0)).toBe('chama-ponta-cima');
+  });
+
+  test('CA-12 bombas e chamas com a classe de animação; jogador com deslize', () => {
+    const e = estado({ bombas: [{ posicao: p(1, 0), jogador_id: 'jogador_1', potencia: 2, pavio_restante: 2 }] });
+    const r = relatorio(1, { chamas: [p(3, 3)], bombas: e.bombas });
+    const { container } = render(Tabuleiro, { tabuleiro: calcularTabuleiro(e, [r], 1), duracaoEtapaMs: 400 });
+    expect(container.querySelector('[data-tipo="bomba"] use')?.classList.contains('animada-bomba')).toBe(true);
+    expect(container.querySelector('[data-tipo="chama"] use')?.classList.contains('animada-chama')).toBe(true);
+    const j = container.querySelector('[data-tipo="jogador"]') as SVGElement;
+    expect(j.classList.contains('deslize')).toBe(true);
+    expect(j.style.getPropertyValue('--transicao')).toBe('200ms');
   });
 });

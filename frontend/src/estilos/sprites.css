@@ -1,0 +1,51 @@
+/* Animações dos sprites do tabuleiro (spec 14, CA-12; plano, D8 e D10).
+   Global de propósito: a media query de movimento reduzido precisa alcançar
+   os elementos dos componentes. */
+
+symbol {
+  shape-rendering: crispEdges;
+}
+
+/* Deslize do jogador entre casas; a duração vem de --transicao. */
+.deslize {
+  transition: transform var(--transicao, 0ms) ease-out;
+}
+
+.animada-bomba {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulso-bomba 0.8s ease-in-out infinite;
+}
+
+.animada-chama {
+  animation: tremor-chama 0.24s steps(2, end) infinite;
+}
+
+@keyframes pulso-bomba {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.09);
+  }
+}
+
+@keyframes tremor-chama {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.78;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animada-bomba,
+  .animada-chama {
+    animation: none;
+  }
+  .deslize {
+    transition: none;
+  }
+}

@@ -3,6 +3,8 @@
   import { relogioReal, type Relogio } from './lib/acompanhamento';
   import { criarCliente, type ClienteApi } from './lib/api';
   import { lerRota } from './lib/rota';
+  import './estilos/sprites.css';
+  import SpritesSvg from './componentes/SpritesSvg.svelte';
   import ListaPartidas from './telas/ListaPartidas.svelte';
   import TelaCriar from './telas/TelaCriar.svelte';
   import TelaPartida from './telas/TelaPartida.svelte';
@@ -23,6 +25,8 @@
     return () => window.removeEventListener('hashchange', mudou);
   });
 </script>
+
+<SpritesSvg />
 
 <main>
   {#if rota.tela === 'partida'}

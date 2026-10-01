@@ -20,6 +20,8 @@
   import { enderecoPartida } from '../lib/rota';
   import { corJogador } from '../lib/textos';
   import type { Posicao } from '../lib/tipos';
+  import type { NomeSprite } from '../lib/sprites';
+  import Sprite from '../componentes/Sprite.svelte';
   import TabuleiroEditor from '../componentes/TabuleiroEditor.svelte';
 
   interface Props {
@@ -59,11 +61,12 @@
     };
   });
 
-  const ferramentas: { f: Ferramenta; rotulo: string }[] = [
-    { f: 'bloco-fixo', rotulo: 'Bloco fixo' },
-    { f: 'bloco-destrutivel', rotulo: 'Bloco destrutível' },
-    { f: 'posicao-inicial', rotulo: 'Posição inicial' },
-    { f: 'borracha', rotulo: 'Borracha' },
+  // Cada ferramenta com o sprite do seu ícone (spec 14, CA-11).
+  const ferramentas: { f: Ferramenta; rotulo: string; sprite: NomeSprite }[] = [
+    { f: 'bloco-fixo', rotulo: 'Bloco fixo', sprite: 'bloco-fixo' },
+    { f: 'bloco-destrutivel', rotulo: 'Bloco destrutível', sprite: 'bloco-destrutivel' },
+    { f: 'posicao-inicial', rotulo: 'Posição inicial', sprite: 'jogador' },
+    { f: 'borracha', rotulo: 'Borracha', sprite: 'piso' },
   ];
 
   // Campos numéricos além de largura e altura; vazio vira 0 e o servidor recusa (D9).
@@ -179,7 +182,9 @@
             aria-pressed={ferramenta === t.f}
             onclick={() => (ferramenta = t.f)}
           >
-            <span class="amostra {t.f}"></span>{t.rotulo}
+            <svg class="amostra" viewBox="0 0 1 1" aria-hidden="true">
+              <Sprite nome={t.sprite} x={0} y={0} cor={corJogador(0)} />
+            </svg>{t.rotulo}
           </button>
         {/each}
       </div>
@@ -284,24 +289,10 @@
     outline: 2px solid #3a7bd5;
   }
   .amostra {
-    width: 0.9rem;
-    height: 0.9rem;
-    border-radius: 0.15rem;
+    width: 1.1rem;
+    height: 1.1rem;
     display: inline-block;
-  }
-  .amostra.bloco-fixo {
-    background: #5b6470;
-  }
-  .amostra.bloco-destrutivel {
-    background: #a07a4f;
-  }
-  .amostra.posicao-inicial {
-    background: #3a7bd5;
-    border-radius: 50%;
-  }
-  .amostra.borracha {
-    background: #2b3a2e;
-    border: 1px dashed #aaa;
+    image-rendering: pixelated;
   }
   .numero {
     display: inline-grid;

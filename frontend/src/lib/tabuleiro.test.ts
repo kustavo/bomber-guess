@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { calcularTabuleiro } from './tabuleiro';
-import { estado, jogador, jogadorEtapa, p, relatorio } from '../testes/fabricas';
+import { estado, explosao, jogador, jogadorEtapa, p, relatorio } from '../testes/fabricas';
 import type { Posicao } from './tipos';
 
 const ordenar = (ps: Posicao[]) => [...ps].sort((a, b) => a.y - b.y || a.x - b.x);
@@ -185,5 +185,18 @@ describe('calcularTabuleiro', () => {
     const t = calcularTabuleiro(estado(), [r], 1);
     expect(t.jogadores.map((j) => j.bloqueado)).toEqual([true, false]);
     expect(t.jogadores[0].resultado).toBe('BLOQUEADA');
+  });
+
+  test('CA-09 explosões: nenhuma no início do turno, só as da etapa exibida depois', () => {
+    const e1 = explosao(p(2, 0), [p(3, 0)]);
+    const e2 = explosao(p(1, 1));
+    const rs = [relatorio(1, { explosoes: [e1], chamas: e1.chamas }), relatorio(2, { explosoes: [e2], chamas: e2.chamas }), relatorio(3)];
+    expect(calcularTabuleiro(estado(), rs, 0).explosoes).toEqual([]);
+    expect(calcularTabuleiro(estado(), rs, 1).explosoes).toEqual([e1]);
+    expect(calcularTabuleiro(estado(), rs, 2).explosoes).toEqual([e2]);
+    expect(calcularTabuleiro(estado(), rs, 3).explosoes).toEqual([]);
+    const t = calcularTabuleiro(estado(), rs, 1);
+    t.explosoes[0].chamas.push(p(9, 9));
+    expect(e1.chamas).toHaveLength(2); // cópia
   });
 });

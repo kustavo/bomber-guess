@@ -237,4 +237,14 @@ describe('TelaCriar', () => {
     await descarregar();
     expect(cliente.chamadas.filter((c) => c.startsWith('salvar mapa'))).toHaveLength(2);
   });
+
+  test('CA-11 botões da paleta mostram o sprite do item; a borracha mostra o piso', async () => {
+    const { q } = await abrir();
+    const icone = (f: Ferramenta) => q(`[data-ferramenta="${f}"] use`)?.getAttribute('data-sprite');
+    expect(icone('bloco-fixo')).toBe('bloco-fixo');
+    expect(icone('bloco-destrutivel')).toBe('bloco-destrutivel');
+    expect(icone('posicao-inicial')).toBe('jogador');
+    expect(icone('borracha')).toBe('piso');
+    expect(q('[data-ferramenta] [data-tipo]')).toBeNull();
+  });
 });

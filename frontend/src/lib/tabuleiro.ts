@@ -1,6 +1,6 @@
 // Tabuleiro exibido: o que a tela mostra num instante, derivado do estado do início
 // do turno e dos relatórios de etapa já liberados (spec 06, CA-01 a CA-04; plano, D3).
-import type { Acao, Bomba, Estado, Morte, Posicao, RelatorioEtapa, ResultadoAcao, Status } from './tipos';
+import type { Acao, Bomba, Estado, Explosao, Morte, Posicao, RelatorioEtapa, ResultadoAcao, Status } from './tipos';
 
 export interface JogadorExibido {
   id: string;
@@ -23,6 +23,7 @@ export interface TabuleiroExibido {
   blocosDestrutiveis: Posicao[];
   bombas: Bomba[];
   chamas: Posicao[];
+  explosoes: Explosao[]; // só as da etapa exibida, como as chamas (spec 14, D7)
   jogadores: JogadorExibido[]; // todos; só os VIVO ocupam casa (FIM-01)
 }
 
@@ -71,6 +72,11 @@ export function calcularTabuleiro(estado: Estado, etapas: RelatorioEtapa[], ate:
       .map((p) => ({ ...p })),
     bombas: (atual?.bombas ?? estado.bombas).map((b) => ({ ...b, posicao: { ...b.posicao } })),
     chamas: (atual?.chamas ?? []).map((p) => ({ ...p })),
+    explosoes: (atual?.explosoes ?? []).map((e) => ({
+      origem: { ...e.origem },
+      potencia: e.potencia,
+      chamas: e.chamas.map((p) => ({ ...p })),
+    })),
     jogadores,
   };
 }

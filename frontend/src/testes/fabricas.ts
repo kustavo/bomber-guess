@@ -4,6 +4,7 @@ import type { ClienteApi } from '../lib/api';
 import type {
   Desfecho,
   Estado,
+  Explosao,
   Jogador,
   JogadorEtapa,
   Mapa,
@@ -62,6 +63,11 @@ export function jogadorEtapa(id: string, posicao: Posicao, extra: Partial<Jogado
     resultado: 'EXECUTADA',
     ...extra,
   };
+}
+
+// explosao: explosão com a origem e as chamas dadas (a origem entra nas chamas, como no backend).
+export function explosao(origem: Posicao, chamas: Posicao[] = [], potencia = 2): Explosao {
+  return { origem, potencia, chamas: [origem, ...chamas] };
 }
 
 // relatorio: etapa sem acontecimentos, com os jogadores do estado() parados.
