@@ -1,6 +1,6 @@
 # Marco 07: editor de mapas e criação de partidas
 
-**Status**: concluída
+**Status**: concluída (reaberta e concluída em 2026-10-01 com o CA-20 e o CA-21, depois do uso real)
 **Roadmap**: `docs/ROADMAP.md`, marco 7
 **Documentos de referência**: `docs/EDITOR.md`; contrato da API já definido em `specs/05-servidor/spec.md` (decisões 4 a 6) e telas do marco 6 (`specs/06-frontend/spec.md`)
 
@@ -80,6 +80,8 @@ Backend: testes Go com `httptest` e diretório temporário. Frontend: Vitest + T
 ### Verificação
 
 - **CA-18**: `gofmt`, `go vet` e `go test ./...` limpos; em `frontend/`, `npm run check` sem erros e `npm test` passando.
+- **CA-20** (decisão 1, decisão 9): **Dado** o campo "Nome da partida" ou "Nome do mapa", **quando** se digita um texto com letras maiúsculas (ex.: `Teste1`), **então** o campo passa a mostrar o texto em minúsculas (`teste1`), e é esse o nome enviado. **Dado** um nome que, mesmo em minúsculas, ainda tem caracteres fora do padrão (espaço, acento, `_`, `/`...), **quando** a tela é exibida, **então** o botão Iniciar está desabilitado e o aviso diz que o nome só aceita letras minúsculas, números e `-`; nenhuma requisição é feita.
+- **CA-21** (decisão 10): **Dada** uma casa do editor clicada com o mouse, **quando** o mouse vai para outra casa, **então** não aparece o anel de foco padrão do navegador (que, dentro do SVG ampliado, vira um círculo enorme sobre o tabuleiro); o foco por teclado continua visível pelo realce da casa. Verificado por teste da folha de estilos do componente e por captura no Chrome.
 - **CA-19**: **Dado** o servidor Go rodando e o frontend no servidor de desenvolvimento, **quando** se desenha um mapa, escolhem-se os bots e clica-se em Iniciar, **então** a partida aparece na tela do marco 6 e o turno avança. Verificação manual registrada no `tarefas.md` (como o CA-16 do marco 6).
 
 ## Decisões
@@ -92,3 +94,5 @@ Backend: testes Go com `httptest` e diretório temporário. Frontend: Vitest + T
 6. **Partida a partir de mapa existente.** Hoje a única forma de usar `exemplo.json` pela tela seria redesenhá-lo. Decisão: fora deste marco, como `docs/EDITOR.md` descreve (o usuário começa com um mapa vazio). Um marco futuro pode trazer `GET /mapas` e "abrir mapa".
 7. **Semente.** `docs/EDITOR.md` não fala dela. Decisão: campo opcional na tela, preenchido com 1 (o padrão do servidor), enviado sempre em `POST /partidas`.
 8. **Validação no frontend.** Decisão: o editor só impede o que é barato e óbvio (menos de 2 posições, nomes vazios, CA-13; dois itens na mesma casa e itens fora do tabuleiro são impossíveis por construção, CA-08 e CA-10). O restante de MAP-05 (`turno_fechamento`, `area_minima`, atributos < 1) fica com o servidor, cujo `erro` é exibido (CA-15). Assim a regra tem uma só implementação.
+9. **Nome em minúsculas (aprovada em 2026-10-01, depois do uso real).** Com a decisão 8, um nome como `Teste1` só era recusado pelo servidor, depois do clique em Iniciar. Decisão: os campos de nome convertem para minúsculas enquanto se digita, e um nome que ainda fique fora do padrão da decisão 1 vira pendência (CA-20). Os outros caracteres não são trocados (por exemplo, espaço não vira `-`): o aviso explica o padrão.
+10. **Anel de foco no tabuleiro (aprovada em 2026-10-01).** As casas são focáveis por causa do teclado (plano, D14). No Chrome, a casa clicada recebe o anel de foco padrão (`outline: auto`), medido em unidades do SVG e ampliado com o tabuleiro: vira um círculo preto e branco enorme. Decisão: as casas nunca usam `outline`; o foco por teclado aparece só pelo realce da casa (CA-21).

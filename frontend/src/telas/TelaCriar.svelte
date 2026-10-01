@@ -8,6 +8,7 @@
     aplicarFerramenta,
     botsDasPosicoes,
     escolherBot,
+    normalizarNome,
     novoMapaEmEdicao,
     paraMapa,
     pendencias,
@@ -88,6 +89,17 @@
     return Number.isNaN(v) ? 0 : v;
   };
 
+  // minusculas converte o campo enquanto se digita, sem mover o cursor (CA-20, D15).
+  function minusculas(campo: HTMLInputElement): string {
+    const v = normalizarNome(campo.value);
+    if (v !== campo.value) {
+      const cursor = campo.selectionStart;
+      campo.value = v;
+      campo.setSelectionRange(cursor, cursor);
+    }
+    return v;
+  }
+
   function clicarCasa(p: Posicao) {
     mapa = aplicarFerramenta(mapa, ferramenta, p, catalogo[0] ?? '');
   }
@@ -130,14 +142,22 @@
     <div class="painel">
       <fieldset>
         <legend>Partida</legend>
-        <label>Nome da partida <input type="text" bind:value={nomePartida} autocomplete="off" /></label>
+        <label>
+          Nome da partida
+          <input
+            type="text"
+            value={nomePartida}
+            autocomplete="off"
+            oninput={(e) => (nomePartida = minusculas(e.currentTarget))}
+          />
+        </label>
         <label>
           Nome do mapa
           <input
             type="text"
             value={nomeMapa}
             autocomplete="off"
-            oninput={(e) => (nomeMapaDigitado = e.currentTarget.value)}
+            oninput={(e) => (nomeMapaDigitado = minusculas(e.currentTarget))}
           />
         </label>
         <label>

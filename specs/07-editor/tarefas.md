@@ -21,6 +21,13 @@ Ordem de execução. Cada tarefa é pequena, termina com testes passando e cita 
 - [x] **T9**: `TelaCriar.svelte`: formulário com padrões, paleta, tabuleiro, seletores de bot, aviso de pendências, botão Iniciar, erros e navegação (D9 a D12). Testes com Testing Library: seletores com o catálogo e primeira versão por padrão; botão desabilitado com aviso e sem requisições; clique em casas muda o mapa e a numeração; Iniciar com sucesso chama as duas rotas com os corpos certos e muda o hash; erro exibido com o mapa intacto; nova tentativa após 409 da partida sem novo `POST /mapas`. (CA-08, CA-09, CA-12, CA-13, CA-14, CA-15, CA-16)
 - [x] **T10**: `App.svelte` despacha `criar`; link "Criar partida" na `ListaPartidas`. Testes: clicar no link leva ao editor; abrir `#/criar` direto mostra o editor vazio. (CA-17)
 
+### Reabertura (2026-10-01)
+
+- [x] **T13**: `normalizarNome` e as pendências de nome fora do padrão (D15); campos de nome da `TelaCriar` convertem para minúsculas. Testes de `editor.ts` e da tela. (CA-20)
+- [x] **T14**: `outline: none` nas casas do `TabuleiroEditor` (D16). Teste da folha de estilos do componente; captura no Chrome headless clicando e movendo o mouse. (CA-21)
+  - **Resultado (2026-10-01)**: reproduzido no Chrome headless (por CDP): depois de clicar numa casa e mover o mouse, a casa focada tinha `outline: auto 5px`, desenhado como um anel preto e branco de várias casas de raio. Com `outline: none`, a mesma sequência mostra só o realce da casa sob o mouse.
+- [x] **T15**: `npm run check` e `npm test` limpos; status da spec → `concluída`.
+
 ### Verificação
 
 - [x] **T11**: Verificação manual de ponta a ponta: servidor Go + `npm run dev`; desenhar um mapa, escolher bots, Iniciar, ver a partida avançar. Registrar o resultado aqui e apagar de `mapas/` o mapa criado no teste. (CA-19)

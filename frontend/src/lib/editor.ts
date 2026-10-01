@@ -152,7 +152,9 @@ export function botsDasPosicoes(m: MapaEmEdicao): string[] {
 export function pendencias(m: MapaEmEdicao, nomePartida: string, nomeMapa: string, bots: string[]): string[] {
   const faltas: string[] = [];
   if (nomePartida.trim() === '') faltas.push('Dê um nome à partida.');
+  else if (!NOME_VALIDO.test(nomePartida)) faltas.push('O nome da partida só aceita letras minúsculas, números e -.'); // CA-20
   if (nomeMapa.trim() === '') faltas.push('Dê um nome ao mapa.');
+  else if (!NOME_VALIDO.test(nomeMapa)) faltas.push('O nome do mapa só aceita letras minúsculas, números e -.');
   if (m.posicoes_iniciais.length < 2) faltas.push('Coloque pelo menos 2 posições iniciais.');
   if (bots.length === 0) faltas.push('O catálogo de bots não foi carregado.');
   return faltas;
@@ -161,4 +163,10 @@ export function pendencias(m: MapaEmEdicao, nomePartida: string, nomeMapa: strin
 // sugerirNomeMapa: o nome da partida, se ele servir de nome de mapa (decisão 1, D11).
 export function sugerirNomeMapa(nomePartida: string): string {
   return NOME_VALIDO.test(nomePartida) ? nomePartida : '';
+}
+
+// normalizarNome converte o nome digitado para minúsculas (CA-20, D15); o resto
+// do padrão de NOME_VALIDO vira pendência, sem trocar caracteres.
+export function normalizarNome(texto: string): string {
+  return texto.toLowerCase();
 }

@@ -95,13 +95,15 @@
     stroke: rgb(0 0 0 / 0.12);
     stroke-width: 0.03;
     cursor: pointer;
+    /* O anel de foco do navegador é medido em unidades do SVG e, ampliado com o
+       tabuleiro, vira um círculo enorme (spec 07, CA-21; plano, D16). */
+    outline: none;
   }
   .casa:hover,
   .casa:focus-visible {
     fill: rgb(255 255 255 / 0.18);
     stroke: #fff;
     stroke-width: 0.06;
-    outline: none;
   }
   .numero {
     fill: #fff;

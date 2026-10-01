@@ -7,6 +7,7 @@ import {
   botsDasPosicoes,
   escolherBot,
   itemEm,
+  normalizarNome,
   novoMapaEmEdicao,
   paraMapa,
   pendencias,
@@ -238,5 +239,28 @@ describe('pendências e nome do mapa', () => {
     { nome: 'CA-13 vazio não é sugerido', partida: '', esperado: '' },
   ])('$nome', ({ partida, esperado }) => {
     expect(sugerirNomeMapa(partida)).toBe(esperado);
+  });
+});
+
+describe('nomes em minúsculas (reabertura)', () => {
+  const duas = aplicar(novoMapaEmEdicao(), ['posicao-inicial', p(0, 0)], ['posicao-inicial', p(1, 0)]);
+
+  test.each([
+    { nome: 'CA-20 maiúsculas viram minúsculas', texto: 'Teste1', esperado: 'teste1' },
+    { nome: 'CA-20 já em minúsculas não muda', texto: 'final-1', esperado: 'final-1' },
+    { nome: 'CA-20 outros caracteres ficam como estão', texto: 'Meu Mapa_2', esperado: 'meu mapa_2' },
+    { nome: 'CA-20 vazio continua vazio', texto: '', esperado: '' },
+  ])('$nome', ({ texto, esperado }) => {
+    expect(normalizarNome(texto)).toBe(esperado);
+  });
+
+  test.each([
+    { nome: 'CA-20 nome da partida com espaço', partida: 'final 1', mapa: 'novo', esperado: ['O nome da partida só aceita letras minúsculas, números e -.'] },
+    { nome: 'CA-20 nome do mapa com sublinhado', partida: 'final-1', mapa: 'meu_mapa', esperado: ['O nome do mapa só aceita letras minúsculas, números e -.'] },
+    { nome: 'CA-20 nome com acento', partida: 'partida-ação', mapa: 'novo', esperado: ['O nome da partida só aceita letras minúsculas, números e -.'] },
+    { nome: 'CA-20 nome com mais de 64 caracteres', partida: 'a'.repeat(65), mapa: 'novo', esperado: ['O nome da partida só aceita letras minúsculas, números e -.'] },
+    { nome: 'CA-20 nomes válidos: nada falta', partida: 'final-1', mapa: 'novo-2', esperado: [] },
+  ])('$nome', ({ partida, mapa, esperado }) => {
+    expect(pendencias(duas, partida, mapa, ['v1'])).toEqual(esperado);
   });
 });

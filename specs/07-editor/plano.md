@@ -130,6 +130,8 @@ export const ENDERECO_CRIAR = '#/criar';
 - **D11**: O nome do mapa começa vazio e acompanha a sugestão (`sugerirNomeMapa(nomePartida)`: o nome da partida, se casar com `NOME_VALIDO`, senão vazio) até o usuário editá-lo à mão. **Motivo**: decisão 1, sem sobrescrever o que o usuário digitou.
 - **D12**: Ao terminar com sucesso, a tela faz `window.location.hash = enderecoPartida(nome)`. O `App` já reage a `hashchange`. **Motivo**: segue o roteamento do marco 6, sem estado global.
 - **D13**: `TabuleiroEditor` é um componente novo, sem reaproveitar `Tabuleiro.svelte`, mas com as mesmas cores e formas de bloco. As posições iniciais aparecem com o número e a cor de `corJogador(i)`. **Motivo**: o `Tabuleiro` desenha um `TabuleiroExibido` (jogadores, bombas, chamas) e não tem casas clicáveis. Adaptá-lo misturaria as duas telas.
+- **D15** (CA-20): `normalizarNome(texto)` em `editor.ts` devolve o texto em minúsculas, e os dois campos de nome o aplicam no `input`. `pendencias` ganha a mensagem "O nome da partida só aceita letras minúsculas, números e -." (e a mesma para o mapa) quando o nome não vazio não casa com `NOME_VALIDO`. **Motivo**: decisão 9; a regra continua com uma só expressão (`NOME_VALIDO`).
+- **D16** (CA-21): `.casa { outline: none }` em todos os estados no `TabuleiroEditor`; o realce de foco por teclado continua em `.casa:focus-visible` (preenchimento claro e contorno branco). O teste lê o `<style>` do componente, como no CA-12 do marco 14. **Motivo**: decisão 10.
 - **D14**: O teclado também funciona: cada casa é um `<rect>` com `role="button"` e `tabindex`, e Enter ou espaço aplicam a ferramenta. **Motivo**: acessibilidade básica, e o `svelte-check` reclama de clique sem teclado.
 
 ## Riscos

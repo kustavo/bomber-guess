@@ -247,4 +247,32 @@ describe('TelaCriar', () => {
     expect(icone('borracha')).toBe('piso');
     expect(q('[data-ferramenta] [data-tipo]')).toBeNull();
   });
+
+  test('CA-20 nomes digitados com maiúsculas viram minúsculas e são enviados assim', async () => {
+    const { tela, escrever, ferramenta, casa, iniciar, cliente } = await abrir();
+    const valor = (r: string) => (tela.getByLabelText(r) as HTMLInputElement).value;
+    await escrever('Nome da partida', 'Teste1');
+    expect(valor('Nome da partida')).toBe('teste1');
+    expect(valor('Nome do mapa')).toBe('teste1');
+    await escrever('Nome do mapa', 'Mapa-A');
+    expect(valor('Nome do mapa')).toBe('mapa-a');
+    await ferramenta('posicao-inicial');
+    await casa(0, 0);
+    await casa(1, 0);
+    await fireEvent.click(iniciar());
+    await descarregar();
+    expect(cliente.mapas[0].nome).toBe('mapa-a');
+    expect(cliente.pedidos[0]).toMatchObject({ nome: 'teste1', mapa: 'mapa-a' });
+  });
+
+  test('CA-20 nome fora do padrão: Iniciar desabilitado, aviso e nenhuma requisição', async () => {
+    const { escrever, preencher, iniciar, aviso, cliente } = await abrir();
+    await preencher();
+    await escrever('Nome da partida', 'Final 1');
+    expect(iniciar().disabled).toBe(true);
+    expect(aviso('pendencias')?.textContent).toContain('O nome da partida só aceita letras minúsculas, números e -.');
+    await fireEvent.click(iniciar());
+    await descarregar();
+    expect(cliente.chamadas).toEqual(['bots']);
+  });
 });

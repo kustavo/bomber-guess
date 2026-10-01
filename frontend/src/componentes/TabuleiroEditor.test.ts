@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import TabuleiroEditor from './TabuleiroEditor.svelte';
@@ -44,5 +46,23 @@ describe('TabuleiroEditor com sprites (marco 14)', () => {
     expect(primeiraCasa).toBeGreaterThan(ultimoItem);
     expect(container.querySelectorAll('[data-casa]')).toHaveLength(12);
     unmount();
+  });
+});
+
+describe('foco das casas (marco 7, reabertura)', () => {
+  // O jsdom não desenha o anel de foco; o teste lê o <style> do componente (D16).
+  const fonte = readFileSync(resolve(process.cwd(), 'src/componentes/TabuleiroEditor.svelte'), 'utf8');
+  const estilo = fonte.slice(fonte.indexOf('<style>'));
+  const corpo = (seletor: string) => {
+    const i = estilo.indexOf(seletor);
+    return i < 0 ? undefined : estilo.slice(estilo.indexOf('{', i) + 1, estilo.indexOf('}', i));
+  };
+
+  test('CA-21 casas nunca usam o anel de foco do navegador', () => {
+    expect(corpo('.casa {')).toMatch(/outline:\s*none/);
+  });
+
+  test('CA-21 o foco por teclado continua visível pelo realce da casa', () => {
+    expect(estilo).toMatch(/\.casa:focus-visible[^{]*\{[^}]*stroke:\s*#fff/);
   });
 });
