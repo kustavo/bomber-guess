@@ -17,6 +17,7 @@ Cada marco segue o fluxo de `specs/README.md` (`/especificar` → `/planejar` �
 | 9 | Ranking e estatísticas | RANKING | médio |
 | 10 | Bots de outras IAs | BOTS, REGRAS | cada IA |
 | 11 | Partidas salvas em disco | ARQUITETURA (seção 2) | médio |
+| 12 | Fechamento do tabuleiro | REGRAS (seções 2, 6 e 7), ARQUITETURA (seção 1.2) | médio |
 
 ## 1. Tipos em Go
 
@@ -75,6 +76,10 @@ Cada IA recebe apenas `AGENTS.md`, `docs/BOTS.md` e `docs/REGRAS.md`. Ferramenta
 ## 11. Partidas salvas em disco
 
 As partidas do servidor (marco 5) vivem só em memória. Gravar o registro de cada partida para que sobreviva a um reinício e possa ser revista depois (`PAR-05`, glossário: a partida "fica salva").
+
+## 12. Fechamento do tabuleiro
+
+Para reduzir empates, a partir de `turno_fechamento` o tabuleiro fecha um anel por turno, de fora para dentro, e quem está no anel morre (FEC-01 a FEC-07). Feito fora da ordem, depois do marco 5, porque quase todas as partidas terminavam empatadas.
 
 ## Versão 2 (depois de tudo acima)
 
