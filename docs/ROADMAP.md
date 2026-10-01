@@ -18,6 +18,7 @@ Cada marco segue o fluxo de `specs/README.md` (`/especificar` → `/planejar` �
 | 10 | Bots de outras IAs | BOTS, REGRAS | cada IA |
 | 11 | Partidas salvas em disco | ARQUITETURA (seção 2) | médio |
 | 12 | Fechamento do tabuleiro | REGRAS (seções 2, 6 e 7), ARQUITETURA (seção 1.2) | médio |
+| 13 | Bot aleatorio-v2 (sobrevive ao fechamento) | BOTS, REGRAS | médio |
 
 ## 1. Tipos em Go
 
@@ -80,6 +81,10 @@ As partidas do servidor (marco 5) vivem só em memória. Gravar o registro de ca
 ## 12. Fechamento do tabuleiro
 
 Para reduzir empates, a partir de `turno_fechamento` o tabuleiro fecha um anel por turno, de fora para dentro, e quem está no anel morre (FEC-01 a FEC-07). Feito fora da ordem, depois do marco 5, porque quase todas as partidas terminavam empatadas.
+
+## 13. Bot aleatorio-v2
+
+Mesmo jeito do `aleatorio-v1`, mas se prepara para o fechamento: vai para o centro antes da hora e abre caminho com bombas quando fica preso atrás de blocos destrutíveis. O v1 continua no catálogo sem mudanças.
 
 ## Versão 2 (depois de tudo acima)
 
